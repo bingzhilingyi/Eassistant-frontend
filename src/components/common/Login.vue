@@ -1,0 +1,152 @@
+<style scoped>
+.formLogin{
+    width: 400px;
+    height: 300px;
+    background-color: white;
+    padding: 20px 50px;
+    margin: 0 auto;
+    position: relative;
+    top:50%;
+    opacity: 0.9;
+    transform: translateY(-60%);
+    -ms-transform: translateY(-60%);
+    -webkit-transform: translateY(-60%);
+    -moz-transform: translateY(-60%);
+    -o-transform: translateY(-60%);
+}
+.formLogin h1{
+    text-align: center;
+    margin-bottom: 20px;
+}
+.loginBtn{
+    font:20px bold ;
+    font-family: "Microsoft YaHei";
+    margin-top:20px;
+}
+</style>
+
+<template>
+    <Form ref="formLogin" :model="formLogin" :rules="ruleLogin" class='formLogin' id='formLogin'>
+        <h1>登录</h1>
+        <FormItem prop="username">
+            <Input v-model="username" style="width: 300px" v-bind="usernameInputData">
+                <Icon v-bind="usernameIconData"/>
+            </Input>
+        </FormItem>
+        <FormItem prop="password">
+            <Input v-model="password" style="width: 300px" v-bind="passwordInputData">
+                <Icon v-bind="passwordIconData"/>
+            </Input>
+        </FormItem>
+        <FormItem>
+            <Button v-bind="loginBtnData" :loading='loading' @click="handleSubmit('formLogin')" class='loginBtn'>登&nbsp&nbsp录</Button>
+        </FormItem>
+    </Form>
+</template>
+<script>
+    import store from '../../store/Login-store'
+    import datas from '../../data/Login-data'
+    import $ from 'jquery'
+    import my_ajax from '../../util/ajax';
+    import servicePaths from '../../router/path'
+    // 在单独构建的版本中辅助函数为 Vuex.mapState
+    import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
+
+    $(document).ready(()=>{
+        $("#formLogin").css({top:'70%',opacity:'0.5'});
+        $("#formLogin").animate({top:'50%',opacity:'0.9'},1000);
+    });
+    
+    export default {
+        store,
+        data () {
+            return {
+                ...datas,
+                ...servicePaths()
+            }
+        },
+        computed:{
+            //vuex state map
+			...mapState({
+                'loading':state=>state.loading,
+            }),
+            //vuex getter map
+			...mapGetters([
+                'formLogin'
+            ]),
+            username:{
+                get () {
+                    return this.$store.state.username
+                },
+                set (value) {
+                    this.$store.commit('updateUsername', value)
+                }
+            },
+            password:{
+                get () {
+                    return this.$store.state.password
+                },
+                set (value) {
+                    this.$store.commit('updatePassword', value)
+                }
+            },
+        },
+        methods:{
+            ...mapMutations([
+                'setLoading'
+            ]),
+            handleSubmit(name) {
+                this.$refs[name].validate((valid) => {
+                    //设置登录按钮在登录中
+                    this.setLoading(true);
+                    var that = this;
+                    //前端验证
+                    if (valid) {
+                        my_ajax({
+                            url:`${this.userServicePath}/Login/login`,
+                            data:{
+                                account:this.$store.state.username,
+                                password:this.$store.state.password
+                            },
+                            type:'POST',
+                            success:function(data){
+                                //返回success，登录成功
+                                if(data.status==='success'){
+                                    that.$Message.success('登录成功，欢迎您!');
+                                    //路由跳转到main
+                                    that.$router.push({name: `main`,params:{token:data.token}});
+                                }else{
+                                    that.$Message.error(data.message);
+                                }
+                            },
+                            error:function(e){
+                                that.$Message.error('登录失败!');
+                            },
+                            complete:function(){
+                                //设置登录按钮登录不在登录中
+                                that.setLoading(false);
+                            }
+                        })
+                    } else {
+                        this.$Message.error('登录失败!');
+                        //设置登录按钮登录不在登录中
+                        this.setLoading(false);
+                    }
+                   
+                })
+            }
+        },
+        created () {
+			// 组件创建完后获取数据，
+            // 此时 data 已经被 observed 了
+        },
+        beforeRouteEnter (to, from, next) {
+			// 在渲染该组件的对应路由被 confirm 前调用
+			// 不！能！获取组件实例 `this`
+            // 因为当守卫执行前，组件实例还没被创建
+			next();
+		},
+    }
+</script>
+
+

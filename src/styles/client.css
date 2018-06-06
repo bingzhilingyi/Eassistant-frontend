@@ -1,0 +1,105 @@
+.QaViewDiv {
+    width: 600px;
+    height: 400px;
+    margin: 50px auto 0px;
+    border: 2px solid #E5E5E5;
+    overflow-y: scroll;
+}
+
+.QaSearchDiv {
+    width: 600px;
+    margin: 0 auto;
+    border: 2px solid #E5E5E5;
+    padding: 10px;
+}
+
+.QaSearchDiv textarea {
+    height: 50px;
+    width: 400px;
+    resize: none;
+    border: 1px solid #E5E5E5;
+    padding: 10px;
+    vertical-align: middle;
+}
+
+.QaSearchDiv button {
+    background-color: #e2f8fb;
+    border: 1px solid #00C1DE;
+    color: #00C1DE;
+    text-align: center;
+    vertical-align: middle;
+    width: 100px;
+    height: 40px;
+    font-size: 14px;
+    border-radius: 5px;
+    margin-left: 30px;
+}
+
+.childrenItem,
+.childrenItem:hover {
+    cursor: pointer;
+    color: #00a2ca;
+    font-size: 12px;
+}
+
+.ui-menu-item {
+    font-size: 12px;
+    color: #00a2ca;
+}
+
+li {
+    list-style: none;
+}
+
+ol,
+ul {
+    padding-left: 2em;
+}
+
+.rightpop {
+    border: 1px solid #E5E5E5;
+    padding: 10px 20px;
+    width: 300px;
+    float: right;
+    margin: 10px;
+    font-size: 12px;
+    background-color: rgb(58, 174, 255);
+    color: white;
+    border-radius: 5px;
+}
+
+.leftpop {
+    border: 1px solid #E5E5E5;
+    padding: 10px 20px;
+    width: 450px;
+    float: left;
+    margin: 10px;
+    background-color: rgb(247, 249, 250);
+    border-radius: 5px
+}
+
+th,
+td {
+    border: 1px solid #c6cbd1;
+    padding: 6px 13px;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+blockquote {
+    padding: 0 1em;
+    color: #6a737d;
+    border-left: .25em solid #dfe2e5;
+    margin-left: 0px;
+}
+
+pre {
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f6f8fa;
+    border-radius: 3px;
+}

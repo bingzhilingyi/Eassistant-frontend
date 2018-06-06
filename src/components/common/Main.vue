@@ -1,0 +1,130 @@
+<style scoped>
+.layout{
+    border: 1px solid #d7dde4;
+    background: #f5f7f9;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 100%;
+    min-height: 600px;
+}
+.layout-logo{
+    width: 100px;
+    height: 42px;
+    background: #5b6270;
+    border-radius: 3px;
+    float: left;
+    position: relative;
+    top: 10px;
+    left: 20px;
+    background-image:url("../../styles/images/logo.jpg");
+    background-repeat:no-repeat; 
+    background-size:100% 100%;
+    -moz-background-size:100% 100%;
+}
+.layout-nav{
+    width: 220px;
+    margin: 0 auto;
+    margin-right: 20px;
+}
+</style>
+<template>
+    <div class="layout">
+        <Layout :style="{height: '100%'}">
+            <Header>
+                <Menu mode="horizontal" theme="dark" active-name="1" @on-select="routeTo">
+                    <div class="layout-logo"></div>
+                    <div class="layout-nav">
+                        <!-- <MenuItem name="1">
+                            <Icon type="ios-navigate"></Icon>
+                            Item 1
+                        </MenuItem>
+                        <MenuItem name="2">
+                            <Icon type="ios-keypad"></Icon>
+                            Item 2
+                        </MenuItem>
+                        <MenuItem name="3">
+                            <Icon type="ios-analytics"></Icon>
+                            Item 3
+                        </MenuItem> -->
+                        <MenuItem name="login">
+                            <Icon type="log-out"></Icon>
+                            重新登录
+                        </MenuItem>
+                    </div>
+                </Menu>
+            </Header>
+            <Layout :style="{minHeight:'500px'}">
+                <Sider collapsible collapsed-width="0">
+                    <Menu ref="leftMenu" :active-name="menuActive" theme="dark" width="auto" :open-names="['userManager','knowledgeManager','clientTest']" @on-select="routeTo">
+                        <Submenu name="userManager">
+                            <template slot="title">
+                                <Icon type="android-contact"></Icon>
+                                用户管理
+                            </template>
+                            <MenuItem name="userList">用户列表</MenuItem>
+                            <MenuItem name="userAdd">用户编辑</MenuItem>
+                        </Submenu>
+                        <Submenu name="knowledgeManager">
+                            <template slot="title">
+                                <Icon type="ios-keypad"></Icon>
+                                知识页管理
+                            </template>
+                            <MenuItem name="tree">知识页管理</MenuItem>
+                        </Submenu>
+                        <Submenu name="clientTest">
+                            <template slot="title">
+                                <Icon type="bug"></Icon>
+                                客户端测试
+                            </template>
+                            <MenuItem name="client">客户端</MenuItem>
+                        </Submenu>
+                    </Menu>
+                </Sider>
+                <Layout :style="{padding: '0 24px'}">
+                    <Content :style="{padding: '24px', background: '#fff'}">
+                        <!-- keep-alive会使组件保留，不会每次都被创建 -->
+                        <keep-alive>
+                            <router-view @changeMenu="OnchangeMenu"></router-view>
+                        </keep-alive>
+                    </Content>
+                </Layout>
+            </Layout>
+        </Layout>
+    </div>
+</template>
+<script>
+    import servicePaths from '../../router/path'
+    export default {
+        data(){
+            return {
+                menuActive:'userList',
+                ...servicePaths()
+            }
+        },
+        computed:{
+        },
+        props:['token'], //设置组件接收的props
+        methods:{
+            routeTo(e){
+                this.$router.push({name:e,params:{token:this.token}});
+            },
+            //当子组件传来切换菜单事件时执行
+            OnchangeMenu(menuName){
+                this.$refs.leftMenu.currentActiveName = menuName;
+            }
+        },
+        beforeRouteUpdate (to, from, next) {
+            // react to route changes...
+            // don't forget to call next()
+            next();
+        },
+        beforeRouteEnter (to, from, next) {
+            var path = to.path;
+            var module = path.split("/");
+            next(vm => {
+                vm.OnchangeMenu(module[3]);
+            })
+        }
+    }
+</script>
