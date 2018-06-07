@@ -9,7 +9,7 @@
             <div v-for="(item,index) in data" :class="item.class" :key="index">
                 <span v-html="item.value.data"></span>
                 <ul>
-                    <li v-for="l in item.value.list">
+                    <li v-for="l in item.value.list" :key="l">
                         <a class="childrenItem" @click="clickSearch(l)">{{l}}</a>
                     </li>
                 </ul>
@@ -32,8 +32,7 @@
 <script>
     require('webpack-jquery-ui');
     require('webpack-jquery-ui/css');
-    require('../styles/client.css')
-    import my_ajax from '../util/ajax';
+    require('../styles/client.css');
     import Vue from 'vue';
     import autocomplete from '../util/autoComplete';
     import servicePaths from '../router/path';
@@ -95,67 +94,65 @@
                 var value = this.value;
                 if (!value) return;
                 this.generateRightPop({data:value,list:[]});
-                var that = this;
-                my_ajax({
+
+                this.$axios({
                     url: `${this.userServicePath}/client/findByTitle`,
-                    data: {
+                    params: {
                         title: value,
                         token: "zdRcLtPlnBTs55KWg9KJqbBHKadYlY"
                     },
-                    success(data) {
-                        var d = data.content; //返回的节点信息
-                        //判断返回的节点信息title是否是你的查询值，是则说明返回的是精确查询结果
-                        if (d && d.title == value) {
-                            //有子集就显示子集列表
-                            if (d.child && d.child.length > 0) {
-                                that.generatelist(d.child);
-                            } else {
-                                //无子集，则显示节点详细
-                                that.generateLeftPop({data:d.qaPage.htmlContent,list:[]});
-                            }
-                        } else if (d && d.child && d.child.length > 0) {
-                            //如果返回结果是模糊查询且有值，返回模糊查询列表
-                            that.generatelist(d.child);
+                    method:'get'
+                }).then((Response)=>{
+                    let data = Response.data;
+                    let d = data.content; //返回的节点信息
+                    //判断返回的节点信息title是否是你的查询值，是则说明返回的是精确查询结果
+                    if (d && d.title == value) {
+                        //有子集就显示子集列表
+                        if (d.child && d.child.length > 0) {
+                            this.generatelist(d.child);
                         } else {
-                            that.generateLeftPop({data:"<p>抱歉，没有查询到与 <b>" + value + "</b> 有关的结果</p>",list:[]});
+                            //无子集，则显示节点详细
+                            this.generateLeftPop({data:d.qaPage.htmlContent,list:[]});
                         }
-                    },
-                    error(e) {
-                        that.generateLeftPop({data:"抱歉，查询出错了...",list:[]});
-                    },
-                    complete() {
+                    } else if (d && d.child && d.child.length > 0) {
+                        //如果返回结果是模糊查询且有值，返回模糊查询列表
+                        this.generatelist(d.child);
+                    } else {
+                        this.generateLeftPop({data:"<p>抱歉，没有查询到与 <b>" + value + "</b> 有关的结果</p>",list:[]});
                     }
-                });
+                }).catch((err)=>{
+                    this.generateLeftPop({data:"抱歉，查询出错了...",list:[]});
+                })
             },
         },
         //只有第一次创建执行
         created(){
-            var that = this;
-            //查找排名最高的100个页面
-            my_ajax({
+            this.$axios({
                 url: `${this.userServicePath}/client/findTopRank`,
-                data: {
+                params: {
                     size: 100,
                     token: "zdRcLtPlnBTs55KWg9KJqbBHKadYlY"
                 },
-                success(data) {
-                    if (data && data.content) {
-                        var content = data.content;
-                        for (var i = 0; i < content.length; i++) {
-                            //把数据都推入自动提示数据源中
-                            that.AutoCompleteDataSource.push(content[i].title);
-                            //把前10条数据推入推荐数据源中
-                            if(i<=9){
-                                that.recommondData.push(content[i].title);
-                            }
+                method:'get'
+            }).then((Response)=>{
+                let data = Response.data;
+                if (data && data.content) {
+                    var content = data.content;
+                    for (var i = 0; i < content.length; i++) {
+                        //把数据都推入自动提示数据源中
+                        this.AutoCompleteDataSource.push(content[i].title);
+                        //把前10条数据推入推荐数据源中
+                        if(i<=9){
+                            this.recommondData.push(content[i].title);
                         }
-                        that.generateLeftPop({
-                            data:"欢迎使用自动应答系统,您也许想咨询以下信息:",
-                            list:that.recommondData
-                        });
                     }
-                },
-                error(e) {}
+                    this.generateLeftPop({
+                        data:"欢迎使用自动应答系统,您也许想咨询以下信息:",
+                        list:this.recommondData
+                    });
+                }
+            }).catch((err)=>{
+
             })
         },
         //每次路由进入都执行

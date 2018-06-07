@@ -43,9 +43,9 @@ const routes = [{
             component: resolve => require(['../components/UserList.vue'], resolve),
             props: true
         }, {
-            path: 'userAdd',
-            name: 'userAdd',
-            component: resolve => require(['../components/UserAdd.vue'], resolve),
+            path: 'userEdit/:userId',
+            name: 'userEdit',
+            component: resolve => require(['../components/userEdit.vue'], resolve),
             props: true
         }, {
             path: 'tree',

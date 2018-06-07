@@ -35,18 +35,6 @@
                 <Menu mode="horizontal" theme="dark" active-name="1" @on-select="routeTo">
                     <div class="layout-logo"></div>
                     <div class="layout-nav">
-                        <!-- <MenuItem name="1">
-                            <Icon type="ios-navigate"></Icon>
-                            Item 1
-                        </MenuItem>
-                        <MenuItem name="2">
-                            <Icon type="ios-keypad"></Icon>
-                            Item 2
-                        </MenuItem>
-                        <MenuItem name="3">
-                            <Icon type="ios-analytics"></Icon>
-                            Item 3
-                        </MenuItem> -->
                         <MenuItem name="login">
                             <Icon type="log-out"></Icon>
                             重新登录
@@ -63,7 +51,7 @@
                                 用户管理
                             </template>
                             <MenuItem name="userList">用户列表</MenuItem>
-                            <MenuItem name="userAdd">用户编辑</MenuItem>
+                            <MenuItem name="userEdit">用户编辑</MenuItem>
                         </Submenu>
                         <Submenu name="knowledgeManager">
                             <template slot="title">
@@ -98,8 +86,8 @@
     export default {
         data(){
             return {
-                menuActive:'userList',
-                ...servicePaths()
+                ...servicePaths(),
+                menuActive:this.userList
             }
         },
         computed:{
@@ -107,7 +95,13 @@
         props:['token'], //设置组件接收的props
         methods:{
             routeTo(e){
-                this.$router.push({name:e,params:{token:this.token}});
+                //如果是用户编辑，需要添加额外的param
+                if(e==='userEdit'){
+                    this.$router.push({name:e,params:{token:this.token,userId:'hold'}});
+                }else{
+                    this.$router.push({name:e,params:{token:this.token}});
+                }
+                //this.$router.push({path:e});
             },
             //当子组件传来切换菜单事件时执行
             OnchangeMenu(menuName){
@@ -115,8 +109,6 @@
             }
         },
         beforeRouteUpdate (to, from, next) {
-            // react to route changes...
-            // don't forget to call next()
             next();
         },
         beforeRouteEnter (to, from, next) {

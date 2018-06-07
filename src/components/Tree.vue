@@ -5,7 +5,7 @@
 }
 .searchedData li{
     list-style-type:none;
-    padding:5px 30px;
+    padding:5px 10px;
     cursor: pointer;
 }
 .hide{
@@ -25,7 +25,7 @@
                 <div :class="{'hide':isHide}">
                     <ul class="searchedData">
                         <li v-for="{title,treeId} in searchedData"  :key="treeId">
-                            <a @click="selectPage2(treeId)">{{title}}</a>
+                            <a @click="selectPageById(treeId)">{{title}}</a>
                         </li>
                     </ul>
                     <p>共查出<span style="color:red">{{searchedTotal}}</span>条数据,
@@ -38,27 +38,28 @@
                 </div>
             </Sider>
             <Content :style="{overflow:'auto',padding: '1px', background: '#fff'}">
-                <router-view @updateTree="OnUpdateTree" @deleteNode="onDeleteNode"></router-view>
+                <keep-alive>
+                    <router-view @updateTree="OnUpdateTree" @deleteNode="onDeleteNode"></router-view>
+                </keep-alive>
             </Content>
         </Layout>
     </div>  
 </template>
 <script>
-    import my_ajax from '../util/ajax';
     import autocomplete from '../util/autoComplete';
     import servicePaths from '../router/path';
     import $ from 'jquery';
     export default {
         data () {
             return {
-                ...servicePaths(),
-                isHide:true,
-                isLoading:false,
-                title:'',
-                ...autocomplete.data(),
+                ...servicePaths(), //服务地址
+                ...autocomplete.data(), //自动完成的数据定义
+                isHide:true, //查询结果框是否隐藏
+                isLoading:false, //查询按钮是否可用
+                title:'', //查询的标题
                 searchedData:[], //查询到的数据
-                searchedTotal:0,
-                message:'点我可以查询',
+                searchedTotal:0, //查询到数据的总数
+                message:'点我可以查询', //按钮上的字
                 selectedItem:[], //被选中的节点
                 treeData:[] //树的数据源
             }
@@ -76,41 +77,38 @@
             },
             //通过父id读取子节点
             loadTree (parentId,callback){
-                var that = this;
-                my_ajax({
-                        url:`${this.userServicePath}/tree/getByParentId/${parentId}`,
-                        data:{
-                            token:this.token
-                        },
-                        success:function(data){
-                            if(data&&data.status=='success'){
-                                var content = new Array();
-                                for(let i=0;i<data.content.length;i++){
-                                    let d = data.content[i];
-                                    //如果不是页面，则添加children属性
-                                    if(d.isPage==='N'){
-                                        d.children = [];
-                                        d.loading = false;
-                                    }
-                                    content.push(d);
-                                }
-                                callback(content);
-                            }else{
-                                that.$Notice.error({
-                                    title: '层级树查询失败',
-                                    desc: data.message
-                                });
+                this.$axios({
+                    url:`${this.userServicePath}/tree/getByParentId/${parentId}`,
+                    params:{
+                        token:this.token
+                    },
+                    method:'get'
+                }).then((response)=>{
+                    let data = response.data;
+                    if(data&&data.status=='success'){
+                        var content = new Array();
+                        for(let i=0;i<data.content.length;i++){
+                            let d = data.content[i];
+                            //如果不是页面，则添加children属性
+                            if(d.isPage==='N'){
+                                d.children = [];
+                                d.loading = false;
                             }
-                        },
-                        error:function(e){
-                            that.$Notice.error({
-                                title: '查询出现异常',
-                                desc: ''
-                            });
-                        },
-                        complete:function(){
+                            content.push(d);
                         }
-                })
+                        callback(content);
+                    }else{
+                        this.$Notice.error({
+                            title: '层级树查询失败',
+                            desc: data.message
+                        });
+                    }
+                }).catch((err)=>{
+                    this.$Notice.error({
+                        title: '查询出现异常',
+                        desc: ''
+                    });
+                });
             },
             //点击选中页面的方法
             selectPage(item){
@@ -122,7 +120,7 @@
                     this.$router.push({name:'tree',params:{token:this.token}});
                 }
             },
-            selectPage2(treeId){
+            selectPageById(treeId){
                 this.$router.push({name:'nodeview',params:{token:this.token,treeId:treeId}});
             },
             //删除节点
@@ -205,7 +203,7 @@
                     }
                 }
             },
-            //跳转到查询节点页
+            //查询方法
             searchNode(){
                 //如果按钮有字，说明还未出现查询框，则显示查询框并清楚按钮的文字
                 if(this.message){
@@ -213,35 +211,32 @@
                 }else{
                     this.isHide = false;
                     this.isLoading = true;
-                    var that = this;
-                    my_ajax({
+                    this.$axios({
                         url:`${this.userServicePath}/tree/getPagedByTitleLike`,
-                        data:{
+                        params:{
                             token:this.token,
                             title:this.title,
                             page:0, //默认只查前10个
                             size:10
                         },
-                        success(data){
-                            if(data&&data.status=='success'){
-                                //接收数据
-                                that.searchedData = data.content;
-                                that.searchedTotal = data.totalElements;
-                            }else{
-                                that.$Notice.error({
-                                    title: '查询失败',
-                                    desc: data.message
-                                });
-                            }
-                        },
-                        error(e){
-                            that.$Notice.error({
-                                title: '查询出现异常'
+                    }).then((response)=>{
+                        let data = response.data;
+                        if(data&&data.status=='success'){
+                            //接收数据
+                            this.searchedData = data.content;
+                            this.searchedTotal = data.totalElements;
+                        }else{
+                            this.$Notice.error({
+                                title: '查询失败',
+                                desc: data.message
                             });
-                        },
-                        complete(){
-                            that.isLoading = false;
                         }
+                        this.isLoading = false;
+                    }).catch((err)=>{
+                        this.$Notice.error({
+                            title: '查询出现异常'
+                        });
+                        this.isLoading = false;
                     })
                 }
             },
@@ -283,36 +278,33 @@
             }
             //加载根目录
             this.loadTree(0,setTreeData);
-            var that = this;
+            
             //查找排名最高的100个页面
-            my_ajax({
+            this.$axios({
                 url: `${this.userServicePath}/client/findTopRank`,
-                data: {
+                params: {
                     size: 100,
                     token: "zdRcLtPlnBTs55KWg9KJqbBHKadYlY"
                 },
-                success(data) {
-                    if (data && data.content) {
-                        var content = data.content;
-                        for (var i = 0; i < content.length; i++) {
-                            that.AutoCompleteDataSource.push(content[i].title);
-                        }
+            }).then((response)=>{
+                let data = response.data;
+                if (data && data.content) {
+                    var content = data.content;
+                    for (var i = 0; i < content.length; i++) {
+                        this.AutoCompleteDataSource.push(content[i].title);
                     }
-                },
-                error(e) {}
+                }
+            }).catch((err)=>{
+
             })
         },
         beforeRouteEnter (to, from, next) {
             //回调函数，当组件加载完毕后调用
             next(vm => {
-                // //如果当前树没有数据，则进行加载
-                // if(vm.treeData.length==0){
-                    
-                // }
-                // //如果自动提示没有数据，则加载自动提示数据
-                // if(vm.AutoCompleteDataSource.length==0){
-                    
-                // }
+                //如果进来时已经有了被选中的节点，那么直接路由到该节点
+                if(vm.selectedItem.length>0){
+                    vm.selectPageById(vm.selectedItem[0].treeId);
+                }
             })
         }
     }

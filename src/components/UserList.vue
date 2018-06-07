@@ -31,10 +31,8 @@
 </template>
 
 <script>
-    import my_ajax from '../util/ajax';
     import servicePaths from '../router/path'
     import store from '../store/UserList-store'
-    import deepCopy from '../util/deepCopy'
     // 在单独构建的版本中辅助函数为 Vuex.mapState
     import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
 	export default {
@@ -156,44 +154,43 @@
                     isSlice = true;
                 }
                 //把现在的查询条件传给历史查询条件
-                this.setHistoryValue(this.searchValue)
+                this.setHistoryValue(this.searchValue);
                 
-                var that = this;
-                my_ajax({
+                this.$axios({
                     url:`${this.userServicePath}/user/findPagedByAccountOrName`,
-                    data:{
+                    method:'get',
+                    params:{
                         account:this.searchValue, //查询条件
                         page:this.currentPage-1, //实际页从0开始，所以要-1
                         size:this.pageSize, //每页大小
                         isSlice:isSlice, //是否是翻页
                         token:this.token
-                    },
-                    success:function(data){
-                        //返回success，登录成功
-                        if(data.status==='success'){
-                            //接收数据
-                            that.userData = data.content;
-                            //如果查询条件isSlice==false时，更新总条目数
-                            if(!isSlice){
-                                that.setTotalElements(data.totalElements)
-                            }
-                        }else{
-                            that.$Notice.error({
-                                title: '查询失败',
-                                desc: data.message
-                            });
-                        }
-                    },
-                    error:function(e){
-                        that.$Notice.error({
-                            title: '查询出现异常',
-                            desc: ''
-                        });
-                    },
-                    complete:function(){
-                        //表格设置为未加载
-                        that.setLoading(false);
                     }
+                }).then((response)=>{
+                    var data = response.data;
+                    //返回success，登录成功
+                    if(data.status==='success'){
+                        //接收数据
+                        this.userData = data.content;
+                        //如果查询条件isSlice==false时，更新总条目数
+                        if(!isSlice){
+                            this.setTotalElements(data.totalElements)
+                        }
+                    }else{
+                        this.$Notice.error({
+                            title: '查询失败',
+                            desc: data.message
+                        });
+                    }
+                    //表格设置为未加载
+                    this.setLoading(false);
+                }).catch((err)=>{
+                    this.$Notice.error({
+                        title: '查询出现异常',
+                        desc: ''
+                    });
+                    //表格设置为未加载
+                    this.setLoading(false);
                 })
             },
             //翻页方法
@@ -204,59 +201,58 @@
             //跳到用户编辑页
             editUser (index) {
                 //触发切换菜单事件，把菜单切换到用户编辑
-                this.$emit('changeMenu','userAdd');
-                //复制一个新对象，不能直接原始数据
-                var userToEdit = deepCopy(this.userData[index]);
+                this.$emit('changeMenu','userEdit');
+                //获取userid
+                var userid = this.userData[index].userId;
                 //导航到用户编辑页，传需要编辑的userid
-                this.$router.push({name:`userAdd`,params:{token:this.token,userToEdit:userToEdit}});
+                this.$router.push({name:`userEdit`,params:{token:this.token,userId:userid}});
             },
             //删除用户
             remove (index) {
                 var id = this.userData[index].userId;
-                var that = this;
-                my_ajax({
+                
+                this.$axios({
                     url:`${this.userServicePath}/user/delete/${id}`,
-                    data:{
+                    method:'post',
+                    data:this.$qs.stringify({
                         token:this.token,
                         _method: 'DELETE'
-                    },
-                    type:"POST",
-                    success:function(data){
-                        //返回success，删除成功
-                        if(data.status==='success'){
-                            that.$Notice.success({
-                                title: '删除成功',
-                                desc: '用户已成功删除'
-                            });
-                            //总数减一
-                            that.setTotalElements(that.totalElements-1);
-                            //把这行数据删掉
-                            that.userData.splice(index, 1);
-                        }else{
-                            that.$Notice.error({
-                                title: '删除失败',
-                                desc: data.message
-                            });
-                        }
-                    },
-                    error:function(e){
-                        that.$Notice.error({
-                            title: '删除出现异常',
-                            desc: ''
+                    })
+                }).then((response)=>{
+                    let data = response.data;
+                    //返回success，删除成功
+                    if(data.status==='success'){
+                        this.$Notice.success({
+                            title: '删除成功',
+                            desc: '用户已成功删除'
                         });
-                    },
-                    complete:function(){
-                        //隐藏删除提示窗口
-                        that.setShowDeleteWarn(false)
+                        //总数减一
+                        this.setTotalElements(this.totalElements-1);
+                        //把这行数据删掉
+                        this.userData.splice(index, 1);
+                    }else{
+                        this.$Notice.error({
+                            title: '删除失败',
+                            desc: data.message
+                        });
                     }
-                })
+                    //隐藏删除提示窗口
+                    this.setShowDeleteWarn(false)
+                }).catch((err)=>{
+                    this.$Notice.error({
+                        title: '删除出现异常',
+                        desc: ''
+                    });
+                    //隐藏删除提示窗口
+                    this.setShowDeleteWarn(false)
+                });
             },
             //跳转到添加新用户
             gotoUserAdd(){
                 //触发切换菜单事件，把菜单切换到用户编辑
-                this.$emit('changeMenu','userAdd');
+                this.$emit('changeMenu','userEdit');
                 //导航到新增用户
-                this.$router.push({name:`userAdd`,params:{token:this.token}});
+                this.$router.push({name:`userEdit`,params:{token:this.token,userId:'new'}});
             }
         }
 	}

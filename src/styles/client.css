@@ -103,3 +103,7 @@ pre {
     background-color: #f6f8fa;
     border-radius: 3px;
 }
+
+img {
+    width: 100%;
+}

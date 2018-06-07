@@ -34,28 +34,21 @@
             </Input>
         </FormItem>
         <FormItem prop="password">
-            <Input v-model="password" style="width: 300px" v-bind="passwordInputData">
+            <Input v-model="password" style="width: 300px" v-bind="passwordInputData" on-enter="handleSubmit">
                 <Icon v-bind="passwordIconData"/>
             </Input>
         </FormItem>
         <FormItem>
-            <Button v-bind="loginBtnData" :loading='loading' @click="handleSubmit('formLogin')" class='loginBtn'>登&nbsp&nbsp录</Button>
+            <Button v-bind="loginBtnData" :loading='loading' @click="handleSubmit" class='loginBtn'>登&nbsp&nbsp录</Button>
         </FormItem>
     </Form>
 </template>
 <script>
     import store from '../../store/Login-store'
     import datas from '../../data/Login-data'
-    import $ from 'jquery'
-    import my_ajax from '../../util/ajax';
     import servicePaths from '../../router/path'
     // 在单独构建的版本中辅助函数为 Vuex.mapState
     import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
-
-    $(document).ready(()=>{
-        $("#formLogin").css({top:'70%',opacity:'0.5'});
-        $("#formLogin").animate({top:'50%',opacity:'0.9'},1000);
-    });
     
     export default {
         store,
@@ -95,38 +88,34 @@
             ...mapMutations([
                 'setLoading'
             ]),
-            handleSubmit(name) {
-                this.$refs[name].validate((valid) => {
+            handleSubmit() {
+                this.$refs['formLogin'].validate((valid) => {
                     //设置登录按钮在登录中
                     this.setLoading(true);
-                    var that = this;
                     //前端验证
                     if (valid) {
-                        my_ajax({
+                        this.$axios({
                             url:`${this.userServicePath}/Login/login`,
-                            data:{
+                            method:'post',
+                            data: this.$qs.stringify({
                                 account:this.$store.state.username,
                                 password:this.$store.state.password
-                            },
-                            type:'POST',
-                            success:function(data){
-                                //返回success，登录成功
-                                if(data.status==='success'){
-                                    that.$Message.success('登录成功，欢迎您!');
-                                    //路由跳转到main
-                                    that.$router.push({name: `main`,params:{token:data.token}});
-                                }else{
-                                    that.$Message.error(data.message);
-                                }
-                            },
-                            error:function(e){
-                                that.$Message.error('登录失败!');
-                            },
-                            complete:function(){
-                                //设置登录按钮登录不在登录中
-                                that.setLoading(false);
+                            })
+                        }).then((response)=>{
+                            let data = response.data;
+                            //返回success，登录成功
+                            if(data.status==='success'){
+                                this.$Message.success('登录成功，欢迎您!');
+                                //路由跳转到main
+                                this.$router.push({name: `main`,params:{token:data.token}});
+                            }else{
+                                this.$Message.error(data.message);
                             }
-                        })
+                            this.setLoading(false);
+                        }).catch((err)=>{
+                            this.$Message.error('登录失败!');
+                            this.setLoading(false);
+                        });
                     } else {
                         this.$Message.error('登录失败!');
                         //设置登录按钮登录不在登录中
@@ -141,10 +130,10 @@
             // 此时 data 已经被 observed 了
         },
         beforeRouteEnter (to, from, next) {
-			// 在渲染该组件的对应路由被 confirm 前调用
-			// 不！能！获取组件实例 `this`
-            // 因为当守卫执行前，组件实例还没被创建
-			next();
+			next(vm=>{
+                vm.$$("#formLogin").css({top:'70%',opacity:'0.5'});
+                vm.$$("#formLogin").animate({top:'50%',opacity:'0.9'},1000);
+            });
 		},
     }
 </script>

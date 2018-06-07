@@ -6,11 +6,17 @@ import mavonEditor from 'mavon-editor'
 import 'iview/dist/styles/iview.css';
 import './styles/index.css';
 import locale from 'iview/dist/locale/zh-CN';
-import 'mavon-editor/dist/css/index.css'
+import 'mavon-editor/dist/css/index.css';
+import axios from 'axios';
+import qs from 'qs';
+import $ from 'jquery'
 
 Vue.use(iView, { locale })
 Vue.use(mavonEditor)
 Vue.config.debug = true; //开启错误提示
+Vue.prototype.$axios = axios;
+Vue.prototype.$qs = qs;
+Vue.prototype.$$ = $;
 
 window.loginUser = { login: false };
 
