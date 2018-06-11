@@ -59,7 +59,7 @@ ul {
 .rightpop {
     border: 1px solid #E5E5E5;
     padding: 10px 20px;
-    width: 300px;
+    width: 400px;
     float: right;
     margin: 10px;
     font-size: 12px;
@@ -71,11 +71,25 @@ ul {
 .leftpop {
     border: 1px solid #E5E5E5;
     padding: 10px 20px;
-    width: 450px;
+    width: 500px;
     float: left;
     margin: 10px;
     background-color: rgb(247, 249, 250);
-    border-radius: 5px
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+}
+
+.notice_bar {
+    width: 100%;
+    position: absolute;
+    position: absolute;
+    bottom: 0px;
+    text-align: center;
+    background-color: #E5E5E5;
+    color: #00a2ca;
+    font-size: 16px;
+    cursor: pointer;
 }
 
 th,
@@ -105,5 +119,5 @@ pre {
 }
 
 img {
-    width: 100%;
+    max-width: 100%;
 }

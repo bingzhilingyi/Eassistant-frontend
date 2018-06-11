@@ -29,11 +29,12 @@
                 <b>{{formItem.parentName}}</b>
             </FormItem>
         </Form>
-        <mavon-editor v-model="formItem.qaPage.content" ref="mvEditor"></mavon-editor>
+        <mavon-editor v-model="formItem.qaPage.content" ref="mvEditor" @imgAdd="$imgAdd"></mavon-editor>
     </div>
 </template>
 <script>
 import servicePaths from '../router/path';
+import my_ajax from '../util/ajax.js'
 export default {
     data(){
         return{
@@ -143,11 +144,11 @@ export default {
                 return;
             }
             this.formItem.qaPage.title = this.formItem.title;
+            //取到md的html内容作为页面的htmlContent
             this.formItem.qaPage.htmlContent = this.$refs.mvEditor.d_render;
-            console.log(this.$refs.mvEditor.d_render);
             //按钮设为不可用
             this.loading = true;
-
+            //发起保存请求
             this.$axios({
                 url:`${this.userServicePath}/tree/${type}`,
                 data:this.$qs.stringify({
@@ -230,7 +231,38 @@ export default {
                     parentName:parentName
                 }
             });
-        }
+        },
+        // 上传图片
+        $imgAdd(pos, $file){
+            //图片不允许大于2M
+            if($file&&$file.size&&$file.size>2097152){
+                this.$Notice.error({
+                    title: '图片上传失败',
+                    desc:'图片大小不能超过2M'
+                });
+                return;
+            }
+            // 第一步.将图片上传到服务器.
+            var formdata = new FormData();
+            formdata.append('image', $file);
+            this.$axios({
+                url: `${this.userServicePath}/tree/upload`,
+                method: 'post',
+                params:{
+                    token:this.token
+                },
+                data: formdata,
+                headers: { 'Content-Type': 'multipart/form-data' }
+            }).then((Response) => {
+                let data = Response.data;
+                // 第二步.将返回的url替换到文本原位置![...](0) -> ![...](url)
+                // $vm.$img2Url 详情见本页末尾
+                this.$refs.mvEditor.$img2Url(pos, data.content);
+            })
+        },
+        // $imgDel(pos){
+        //     delete this.img_file[pos];
+        // },
     },
     props:['token','treeId'],
     watch:{},
