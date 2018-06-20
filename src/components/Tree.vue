@@ -34,7 +34,8 @@
                     </p>
                 </div>
                 <div style="overflow:auto;padding-top:20px">
-                    <Tree :data="treeData" :load-data="loadData" @on-select-change="selectPage" ref="tree"></Tree>
+                    <Button type="warning" @click="addRoot">添加根节点</Button>
+                    <Tree :data="treeData" :load-data="loadData" ref="tree" :render="renderContent"></Tree>
                 </div>
             </Sider>
             <Content :style="{overflow:'auto',padding: '1px', background: '#fff'}">
@@ -70,6 +71,7 @@
             }
         },
         methods:{
+            //自动提示的方法
             ...autocomplete.methods,
             //加载下级节点的方法
             loadData (item, callback) {
@@ -112,14 +114,18 @@
             },
             //点击选中页面的方法
             selectPage(item){
-                this.selectedItem = item;
-                //路由到页面详细信息
-                if(item.length>0){
-                    this.$router.push({name:'nodeview',params:{token:this.token,treeId:item[0].treeId}});
+                if(item){
+                    if(this.selectedItem.treeId){
+                        this.$$("#qaTree_"+this.selectedItem.treeId).css('background-color','');
+                    }
+                    this.selectedItem = item;
+                    this.$$("#qaTree_"+this.selectedItem.treeId).css('background-color','#2d8cf038');
+                    this.$router.push({name:'nodeview',params:{token:this.token,treeId:item.treeId}});
                 }else{
                     this.$router.push({name:'tree',params:{token:this.token}});
                 }
             },
+            //通过id查找页面的方法
             selectPageById(treeId){
                 this.$router.push({name:'nodeview',params:{token:this.token,treeId:treeId}});
             },
@@ -268,6 +274,58 @@
                 this.searchedTotal = 0;
                 this.isHide = true;
                 this.toggelSearch(false);
+            },
+            //添加根节点
+            addRoot(){
+                this.$router.push({
+                    name:'nodeview',
+                    params:{token:this.token,treeId:'new'},
+                    query:{
+                        parentId:0,
+                        parentName:"根节点"
+                    }
+                });
+            },
+            renderContent (h, { root, node, data }) {
+                return h('span',{
+                        style:{
+                            cursor:'pointer',
+                            display:'inline-block'
+                        },
+                        attrs: {
+                            id: 'qaTree_'+node.node.treeId
+                        },
+                        on: { 
+                            click: () => {
+                                //选中该节点
+                                this.selectPage(node.node) 
+                            }
+                        }
+                    },[
+                    h('Icon', {
+                        props: {
+                            type: ((isPage)=>{ //根据是否是节点来加载不同的图标
+                                if(isPage==='Y'){
+                                    return 'ios-paper-outline';
+                                }else{
+                                    return 'ios-folder-outline';
+                                }
+                            })(node.node.isPage)
+                        },
+                        style: {
+                            marginRight: '8px'
+                        }
+                    }),
+                    h('span', data.title),
+                    h('span',{
+                            style:{
+                                color:'rgb(248, 60, 116)',
+                                marginLeft:'10px'
+                            }
+                        },
+                        `${data.rank}`
+                    )
+                ])
             }
         },
         props:['token'],

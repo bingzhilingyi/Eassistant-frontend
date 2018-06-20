@@ -1,14 +1,18 @@
+.qaSystem {
+    margin: 50px auto 0px;
+    width: 600px;
+    position: relative;
+}
+
 .QaViewDiv {
     width: 600px;
     height: 400px;
-    margin: 50px auto 0px;
     border: 2px solid #E5E5E5;
     overflow-y: scroll;
 }
 
 .QaSearchDiv {
     width: 600px;
-    margin: 0 auto;
     border: 2px solid #E5E5E5;
     padding: 10px;
 }
@@ -22,7 +26,8 @@
     vertical-align: middle;
 }
 
-.QaSearchDiv button {
+.QaSearchDiv button,
+.QaSearchDiv button:hover {
     background-color: #e2f8fb;
     border: 1px solid #00C1DE;
     color: #00C1DE;
@@ -33,6 +38,22 @@
     font-size: 14px;
     border-radius: 5px;
     margin-left: 30px;
+}
+
+.qa_clear_btn {
+    background-color: #fff;
+    border: 1px solid #e96900;
+    color: #e96900;
+    width: 50px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    border-radius: 5px;
+    position: absolute;
+    top: 5px;
+    right: 12px;
+    cursor: pointer;
+    text-align: center;
 }
 
 .childrenItem,

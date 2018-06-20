@@ -5,26 +5,29 @@
         <p style="text-align:center">
             <b style="color:#00C1DE">温馨提示</b>：该测试页面由vue编写，正式环境客户端页面由jquery编写，故最终显示效果及用户体验会有细微差别，但功能完全一致。
         </p>
-        <div id="QaShowDiv" class="QaViewDiv" ref="QaViewDiv">
-            <div v-for="(item,index) in data" :class="item.class" :key="index" :ref="'leftPop-'+index">
-                <span v-html="item.value.data"></span>
-                <ul>
-                    <li v-for="l in item.value.list" :key="l">
-                        <a class="childrenItem" @click="clickSearch(l)">{{l}}</a>
-                    </li>
-                </ul>
+        <div class="qaSystem" id="qaSystem">
+            <div class="qa_clear_btn" @click="qa_clear()">清空</div>
+            <div id="QaShowDiv" class="QaViewDiv" ref="QaViewDiv">
+                <div v-for="(item,index) in data" :class="item.class" :key="index" :ref="'leftPop-'+index">
+                    <span v-html="item.value.data"></span>
+                    <ul>
+                        <li v-for="l in item.value.list" :key="l">
+                            <a class="childrenItem" @click="clickSearch(l)">{{l}}</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-        <div class="QaSearchDiv">
-            <AutoComplete
-            v-model="value"
-            :data="AutoCompleteData"
-            placeholder="您想查询什么..."
-            @on-search="handleComplete"
-            @keyup.enter="search"
-            size="large"
-            style="width:400px"></AutoComplete>
-            <button @click="search">查询</button>
+            <div class="QaSearchDiv">
+                <AutoComplete
+                v-model="value"
+                :data="AutoCompleteData"
+                placeholder="您想查询什么..."
+                @on-search="handleComplete"
+                @keyup.enter="search"
+                size="large"
+                style="width:400px"></AutoComplete>
+                <Button @click="search">查询</Button>
+            </div>
         </div>
         <Modal v-model="showBigImage" width="800">
             <img :src.prop="imageSource"></img>
@@ -49,7 +52,8 @@
                 data:[], //对话框的数据
                 recommondData:[], //推荐数据
                 showBigImage:false,
-                imageSource:''
+                imageSource:'',
+                isSearching:false
             }
         },
         watch:{
@@ -112,7 +116,22 @@
             //查询的方法
             search() {
                 var value = this.value;
-                if (!value) return;
+                if (!value)
+                    return
+                else if (value === 'clear') {
+                    this.data = [];
+                    this.value = '';
+                    //生成欢迎与推荐信息
+                    this.generateLeftPop({
+                        data:"欢迎使用自动应答系统,您也许想咨询以下信息:",
+                        list:this.recommondData
+                    });
+                    return;
+                } else if (this.isSearching) {
+                    //如果当前正在查询中，不让再查
+                    this.qa_generateLeftPop('正在查询中，请稍后...');
+                    return;
+                }
                 this.generateRightPop({data:value,list:[]});
                 //发送查询请求
                 this.$axios({
@@ -176,6 +195,15 @@
                         });
                     lastItem.append(expand);
                 }
+            },
+            //清除所有对话框
+            qa_clear() {
+                this.data = [];
+                //生成欢迎与推荐信息
+                this.generateLeftPop({
+                    data:"欢迎使用自动应答系统,您也许想咨询以下信息:",
+                    list:this.recommondData
+                });
             }
         },
         //只有第一次创建执行，查询排名前100的知识页
@@ -183,7 +211,7 @@
             this.$axios({
                 url: `${this.userServicePath}/client/findTopRank`,
                 params: {
-                    size: 100,
+                    size: 500,
                     token: "zdRcLtPlnBTs55KWg9KJqbBHKadYlY"
                 },
                 method:'get'

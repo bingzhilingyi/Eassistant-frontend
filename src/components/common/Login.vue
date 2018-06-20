@@ -34,7 +34,7 @@
             </Input>
         </FormItem>
         <FormItem prop="password">
-            <Input v-model="password" style="width: 300px" v-bind="passwordInputData" on-enter="handleSubmit">
+            <Input v-model="password" style="width: 300px" v-bind="passwordInputData" @on-enter="handleSubmit">
                 <Icon v-bind="passwordIconData"/>
             </Input>
         </FormItem>

@@ -1,6 +1,6 @@
 ///////////---dev---///////////
-//const userServicePath_dev = "http://localhost:8080/qa";
-const userServicePath_dev = "http://10.61.16.29:8522/qa";
+const userServicePath_dev = "http://localhost:8080/qa";
+//const userServicePath_dev = "http://10.61.16.29:8522/qa";
 const localhost_dev = "http://localhost:8888";
 const servicePaths_dev = () => {
     return {

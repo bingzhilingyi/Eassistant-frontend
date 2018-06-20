@@ -1,7 +1,14 @@
 <style scoped>
 .hideFather{
     display: none;
-};
+}
+.notice{
+    line-height: 24px;
+    color:rgb(248, 60, 116);
+    font-size: 14px;
+    font-weight: bold;
+    padding-left: 30px;
+}
 </style>
 <template>
     <div>
@@ -10,10 +17,11 @@
             <Button type="primary" @click="loadData()" :loading='loading' :disabled="refreshDisabled">刷新</Button>
             <Button type="primary" @click="save" :loading='loading'>保存</Button>
             <Button type="warning" @click="deleteNode" :loading='loading' :disabled="delDisabled">删除</Button>
+            <span class="notice" :class="hideFather">如添加节点后左侧树没有更新，请刷新网页</span>
         </ButtonGroup>
-        <Form :model="formItem" :label-width="80" ref="treeEdit" inline>
+        <Form :model="formItem" :label-width="60" ref="treeEdit" inline>
             <FormItem label="标题" prop="title">
-                <Input v-model="formItem.title" style="width: 300px"></Input>
+                <Input v-model="formItem.title" style="width: 200px"></Input>
             </FormItem>
             <FormItem label="类型">
                 <RadioGroup v-model="formItem.isPage">
@@ -23,7 +31,9 @@
                         <Icon type="ios-help-outline" size="18"></Icon>
                     </Tooltip>
                 </RadioGroup>
-                
+            </FormItem>
+            <FormItem label="热度">
+                <b style="color:red">{{formItem.rank}}</b>
             </FormItem>
             <FormItem label="父级" :class="hideFather">
                 <b>{{formItem.parentName}}</b>
@@ -70,6 +80,7 @@ export default {
                     isPage:'N', 
                     parentId:parentId,
                     parentName:parentName,
+                    rank:0,
                     qaPage:{
                         content:'# 请输入内容'
                     }
