@@ -23,13 +23,13 @@
                 :data="AutoCompleteData"
                 placeholder="您想查询什么..."
                 @on-search="handleComplete"
-                @keyup.enter="search"
                 size="large"
                 style="width:400px"></AutoComplete>
                 <Button @click="search">查询</Button>
             </div>
         </div>
-        <Modal v-model="showBigImage" width="800">
+        <!-- 弹出框 -->
+        <Modal v-model="showBigImage" width="100">
             <img :src.prop="imageSource"></img>
             <div slot="footer">
             </div>
@@ -115,10 +115,12 @@
             },
             //查询的方法
             search() {
-                var value = this.value;
+                //取到查询条件
+                var value = $.trim(this.value);
+                //如果查询条件为空，直接返回
                 if (!value)
                     return
-                else if (value === 'clear') {
+                else if (value === 'clear') { //如果输入了clear，清除所有对话框
                     this.data = [];
                     this.value = '';
                     //生成欢迎与推荐信息
@@ -129,19 +131,23 @@
                     return;
                 } else if (this.isSearching) {
                     //如果当前正在查询中，不让再查
-                    this.qa_generateLeftPop('正在查询中，请稍后...');
+                    this.generateLeftPop({data:'正在查询中，请稍后...',list:[]});
                     return;
                 }
+                //生成右侧对话框
                 this.generateRightPop({data:value,list:[]});
+                //是否正在查询设置为是
+                this.isSearching = true;
                 //发送查询请求
                 this.$axios({
                     url: `${this.userServicePath}/client/findByTitle`,
                     params: {
                         title: value,
-                        token: "zdRcLtPlnBTs55KWg9KJqbBHKadYlY"
+                        token:this.service_token
                     },
                     method:'get'
                 }).then((Response)=>{
+                    this.isSearching = false;
                     let data = Response.data; //返回的数据
                     let d = data.content; //返回的节点信息
                     //判断返回的节点信息title是否是你的查询值，是则说明返回的是精确查询结果
@@ -161,6 +167,7 @@
                         this.generateLeftPop({data:"<p>抱歉，没有查询到与 <b>" + value + "</b> 有关的结果</p>",list:[]});
                     }
                 }).catch((err)=>{
+                    this.isSearching = false;
                     this.generateLeftPop({data:"抱歉，查询出错了...",list:[]});
                 })
             },
@@ -204,15 +211,17 @@
                     data:"欢迎使用自动应答系统,您也许想咨询以下信息:",
                     list:this.recommondData
                 });
+                //清除当前查询条件
+                this.value = '';
             }
         },
-        //只有第一次创建执行，查询排名前100的知识页
         created(){
+            //只有第一次创建执行，查询排名前500的知识页作为自动提示
             this.$axios({
                 url: `${this.userServicePath}/client/findTopRank`,
                 params: {
                     size: 500,
-                    token: "zdRcLtPlnBTs55KWg9KJqbBHKadYlY"
+                    token:this.service_token
                 },
                 method:'get'
             }).then((Response)=>{
@@ -222,10 +231,24 @@
                     for (var i = 0; i < content.length; i++) {
                         //把数据都推入自动提示数据源中
                         this.AutoCompleteDataSource.push(content[i].title);
-                        //把前10条数据推入推荐数据源中
-                        if(i<=9){
-                            this.recommondData.push(content[i].title);
-                        }
+                    }
+                }
+            }).catch((err)=>{
+            })
+            //查询出根目录作为欢迎信息
+            this.$axios({
+                url:`${this.userServicePath}/client/findRoot`,
+                params:{
+                    token:this.service_token
+                },
+                method:'get'
+            }).then((Response)=>{
+                let data = Response.data;
+                if (data && data.content) {
+                    var content = data.content;
+                    for (var i = 0; i < content.length; i++) {
+                        //把数据推入推荐数据源中
+                        this.recommondData.push(content[i].title);
                     }
                     this.generateLeftPop({
                         data:"欢迎使用自动应答系统,您也许想咨询以下信息:",

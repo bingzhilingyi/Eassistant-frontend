@@ -1,4 +1,16 @@
 <style scoped>
+.loginDiv{
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+.loginTitle{
+    top:20%;
+    position: relative;
+    text-align: center;
+    color:black;
+    font-size:60px;
+}
 .formLogin{
     width: 400px;
     height: 300px;
@@ -6,7 +18,7 @@
     padding: 20px 50px;
     margin: 0 auto;
     position: relative;
-    top:50%;
+    top:45%;
     opacity: 0.9;
     transform: translateY(-60%);
     -ms-transform: translateY(-60%);
@@ -26,22 +38,25 @@
 </style>
 
 <template>
-    <Form ref="formLogin" :model="formLogin" :rules="ruleLogin" class='formLogin' id='formLogin'>
-        <h1>登录</h1>
-        <FormItem prop="username">
-            <Input v-model="username" style="width: 300px" v-bind="usernameInputData">
-                <Icon v-bind="usernameIconData"/>
-            </Input>
-        </FormItem>
-        <FormItem prop="password">
-            <Input v-model="password" style="width: 300px" v-bind="passwordInputData" @on-enter="handleSubmit">
-                <Icon v-bind="passwordIconData"/>
-            </Input>
-        </FormItem>
-        <FormItem>
-            <Button v-bind="loginBtnData" :loading='loading' @click="handleSubmit" class='loginBtn'>登&nbsp&nbsp录</Button>
-        </FormItem>
-    </Form>
+    <div class="loginDiv">
+        <h1 class="loginTitle">智能顾问后台管理系统</h1>
+        <Form ref="formLogin" :model="formLogin" :rules="ruleLogin" class='formLogin' id='formLogin'>
+            <h1>登录</h1>
+            <FormItem prop="username">
+                <Input v-model="username" style="width: 300px" v-bind="usernameInputData">
+                    <Icon v-bind="usernameIconData"/>
+                </Input>
+            </FormItem>
+            <FormItem prop="password">
+                <Input v-model="password" style="width: 300px" v-bind="passwordInputData" @on-enter="handleSubmit">
+                    <Icon v-bind="passwordIconData"/>
+                </Input>
+            </FormItem>
+            <FormItem>
+                <Button v-bind="loginBtnData" :loading='loading' @click="handleSubmit" class='loginBtn'>登&nbsp&nbsp录</Button>
+            </FormItem>
+        </Form>
+    </div>
 </template>
 <script>
     import store from '../../store/Login-store'
@@ -132,7 +147,7 @@
         beforeRouteEnter (to, from, next) {
 			next(vm=>{
                 vm.$$("#formLogin").css({top:'70%',opacity:'0.5'});
-                vm.$$("#formLogin").animate({top:'50%',opacity:'0.9'},1000);
+                vm.$$("#formLogin").animate({top:'45%',opacity:'0.9'},1000);
             });
 		},
     }

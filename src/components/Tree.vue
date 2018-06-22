@@ -33,14 +33,16 @@
                         <a @click="hideSearch">[收起]</a>    
                     </p>
                 </div>
-                <div style="overflow:auto;padding-top:20px">
+                <div style="overflow:auto;padding-top:10px;">
                     <Button type="warning" @click="addRoot">添加根节点</Button>
-                    <Tree :data="treeData" :load-data="loadData" ref="tree" :render="renderContent"></Tree>
+                    <Tree :data="treeData" :load-data="loadData" ref="tree" :render="renderContent" 
+                        :style="{border:'1px solid #ccc',minHeight:'500px',overflow:'auto',marginTop:'10px'}">
+                    </Tree>
                 </div>
             </Sider>
             <Content :style="{overflow:'auto',padding: '1px', background: '#fff'}">
                 <keep-alive>
-                    <router-view @updateTree="OnUpdateTree" @deleteNode="onDeleteNode"></router-view>
+                    <router-view @updateTree="OnUpdateTree" @deleteNode="onDeleteNode" @changeParent="onChangeParent" ref="nodeview"></router-view>
                 </keep-alive>
             </Content>
         </Layout>
@@ -61,8 +63,9 @@
                 searchedData:[], //查询到的数据
                 searchedTotal:0, //查询到数据的总数
                 message:'点我可以查询', //按钮上的字
-                selectedItem:[], //被选中的节点
-                treeData:[] //树的数据源
+                selectedItem:null, //被选中的节点
+                treeData:[], //树的数据源
+                isChangeParent:false, //是否是变更上级
             }
         },
         computed:{
@@ -114,15 +117,26 @@
             },
             //点击选中页面的方法
             selectPage(item){
-                if(item){
-                    if(this.selectedItem.treeId){
-                        this.$$("#qaTree_"+this.selectedItem.treeId).css('background-color','');
+                //如果不是变更上级，正常查询
+                if(!this.isChangeParent){
+                    if(item){
+                        if(this.selectedItem&&this.selectedItem.treeId){
+                            this.$$("#qaTree_"+this.selectedItem.treeId).css('background-color','');
+                        }
+                        this.selectedItem = item;
+                        this.$$("#qaTree_"+this.selectedItem.treeId).css('background-color','#2d8cf038');
+                        this.$router.push({name:'nodeview',params:{token:this.token,treeId:item.treeId}});
+                    }else{
+                        this.$router.push({name:'tree',params:{token:this.token}});
                     }
-                    this.selectedItem = item;
-                    this.$$("#qaTree_"+this.selectedItem.treeId).css('background-color','#2d8cf038');
-                    this.$router.push({name:'nodeview',params:{token:this.token,treeId:item.treeId}});
                 }else{
-                    this.$router.push({name:'tree',params:{token:this.token}});
+                    //确保新父级不会是自己，且不会是知识页
+                    if(this.$refs.nodeview.treeId==item.treeId||item.isPage=='Y'){
+                        return
+                    }
+                    //如果是变更上级，把子组件里的newParent设置为选中的treeid
+                    this.$refs.nodeview.newParent = item.treeId;
+                    this.$refs.nodeview.newParentName = item.title;
                 }
             },
             //通过id查找页面的方法
@@ -167,12 +181,12 @@
                 //取到返回数据的id
                 var treeId = data.treeId;
                 var parentId = data.parentId;
-                var selectedItem = this.selectedItem[0];
+                var selectedItem = this.selectedItem;
                 //如果当前有选中的项,且选中的项就是被保存的项，更新一下信息
-                if(this.selectedItem.length>0&&selectedItem.treeId==treeId){
+                if(this.selectedItem&&selectedItem.treeId==treeId){
                     selectedItem.title = data.title;
                     selectedItem.isPage = data.isPage;
-                }else if(this.selectedItem.length>0&&selectedItem.treeId==parentId){
+                }else if(this.selectedItem&&selectedItem.treeId==parentId){
                     //如果选中的是它的父级，那么就先判断父级里有没有它，没有就加上
                     if(selectedItem.children.length>0){
                         let isExists = false;
@@ -198,14 +212,9 @@
                     var treeData = this.$refs.tree.data;
                     //从这些数据里找treeid的父级
                     var fatherInfo = this.getFather(treeData,treeId);
-                    //如果找到了父级，就从父级里修改该数据,否则，查找父级的父级
+                    //如果找到了父级，就从父级里修改该数据
                     if(fatherInfo&&fatherInfo.data){
                         fatherInfo.data[fatherInfo.index].title=data.title;
-                    }else{
-                        // var grantInfo = this.getFather(treeData,parentId);
-                        // if(grantInfo&&grantInfo.data){
-                        //     grantInfo.data[grantInfo.index].children.push(data);
-                        // }
                     }
                 }
             },
@@ -293,12 +302,12 @@
                             display:'inline-block'
                         },
                         attrs: {
-                            id: 'qaTree_'+node.node.treeId
+                            id: 'qaTree_'+data.treeId
                         },
                         on: { 
                             click: () => {
                                 //选中该节点
-                                this.selectPage(node.node) 
+                                this.selectPage(data) 
                             }
                         }
                     },[
@@ -310,7 +319,7 @@
                                 }else{
                                     return 'ios-folder-outline';
                                 }
-                            })(node.node.isPage)
+                            })(data.isPage)
                         },
                         style: {
                             marginRight: '8px'
@@ -319,13 +328,30 @@
                     h('span', data.title),
                     h('span',{
                             style:{
-                                color:'rgb(248, 60, 116)',
+                                //热度越高，颜色越深
+                                color:((rank)=>{
+                                    let color;
+                                    if(!rank||rank<10)
+                                        color = 'rgb(255, 170, 0)';
+                                    else if(rank<100)
+                                        color = 'rgb(255, 102, 0)';
+                                    else if(rank<1000)
+                                        color = 'rgb(255, 51, 0)'; 
+                                    else
+                                        color = 'rgb(255, 0, 0)'  ;
+                                    return color; 
+                                })(data.rank),
                                 marginLeft:'10px'
                             }
                         },
                         `${data.rank}`
                     )
                 ])
+            },
+            //变更上级的方法
+            onChangeParent(isChangeParent){
+                //改变状态
+                this.isChangeParent = isChangeParent;
             }
         },
         props:['token'],
@@ -341,7 +367,7 @@
             this.$axios({
                 url: `${this.userServicePath}/client/findTopRank`,
                 params: {
-                    size: 100,
+                    size: 500,
                     token: "zdRcLtPlnBTs55KWg9KJqbBHKadYlY"
                 },
             }).then((response)=>{
@@ -360,8 +386,8 @@
             //回调函数，当组件加载完毕后调用
             next(vm => {
                 //如果进来时已经有了被选中的节点，那么直接路由到该节点
-                if(vm.selectedItem.length>0){
-                    vm.selectPageById(vm.selectedItem[0].treeId);
+                if(vm.selectedItem){
+                    vm.selectPageById(vm.selectedItem.treeId);
                 }
             })
         }

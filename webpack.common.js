@@ -5,7 +5,6 @@ const webpack = require('webpack');
 
 const PATHS = {
     src: path.join(__dirname, 'src/index.js'),
-    //test: path.join(__dirname, 'src/index-test.js'),
     webapp: path.join(__dirname, 'webapp/'),
 };
 

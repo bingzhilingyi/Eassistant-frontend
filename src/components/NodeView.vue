@@ -1,6 +1,6 @@
-<style scoped>
+<style>
 .hideFather{
-    display: none;
+    display: none !important;
 }
 .notice{
     line-height: 24px;
@@ -9,11 +9,15 @@
     font-weight: bold;
     padding-left: 30px;
 }
+.v-note-wrapper{
+    z-index:999 !important;
+}
 </style>
 <template>
     <div>
         <ButtonGroup :style="{marginBottom:'10px'}">
             <Button type="primary" @click="addChild" :loading='loading' :disabled="addDisabled">添加下级</Button>
+            <Button type="primary" @click="changeParent" :loading='loading' :disabled="changeParentDisabled">变更上级</Button>
             <Button type="primary" @click="loadData()" :loading='loading' :disabled="refreshDisabled">刷新</Button>
             <Button type="primary" @click="save" :loading='loading'>保存</Button>
             <Button type="warning" @click="deleteNode" :loading='loading' :disabled="delDisabled">删除</Button>
@@ -52,11 +56,14 @@ export default {
             addDisabled:false, //添加按钮是否可用
             delDisabled:false, //删除按钮是否可用
             refreshDisabled:false, //刷新按钮是否可用
+            changeParentDisabled:false,//变更上级是否可用
             hideFather:'hideFather', //父级的类
             loading:false, //按钮是否在加载中
             formItem:{
                 qaPage:{}
-            }
+            },
+            newParent:null, //新选择的父级id
+            newParentName:null
         }
     },
     computed:{},
@@ -91,6 +98,7 @@ export default {
                 this.addDisabled = true;
                 this.refreshDisabled = true;
                 this.delDisabled = true;
+                this.changeParentDisabled = true;
                 return;
             }else{
                 //隐藏父级
@@ -99,6 +107,7 @@ export default {
                 this.addDisabled = false;
                 this.refreshDisabled = false;
                 this.delDisabled = false;
+                this.changeParentDisabled = false;
             }
             //按钮设置为不可用
             this.loading = true;
@@ -122,9 +131,10 @@ export default {
                     if(this.formItem.isPage=='Y'){
                         this.addDisabled = true;
                     }
-                    //如果当前节点是根节点，不允许删除
+                    //如果当前节点是根节点，不允许删除,不允许变更上级
                     if(this.formItem.parentId==0){
                         this.delDisabled = true;
+                        this.changeParentDisabled = true;
                     }
                     //隐藏父级显示
                     this.hideFather = 'hideFather';
@@ -147,6 +157,10 @@ export default {
             //默认为update，如果是新建，更换为save
             var type = this.treeId=='new'?'save':'update';
             var method = this.treeId=='new'?'POST':'PUT';
+            //把标题里的所有空格去掉
+            var reg = new RegExp(" ","g");//g,表示全部替换。
+            var title = this.formItem.title.replace(reg,"");
+            this.formItem.title = title;
             //把页面title设置为节点title，并验证title是否存在
             if(!this.formItem.title){
                 this.$Notice.error({
@@ -274,6 +288,86 @@ export default {
         // $imgDel(pos){
         //     delete this.img_file[pos];
         // },
+        //更换上级的方法
+        changeParent(){
+            //如果是新建或本身是根目录
+            if(this.treeId==='new'||this.formItem.parentId===0){
+                this.$Message.error('根节点不允许变更父级！');
+                return;
+            };
+            //触发更换上级事件
+            this.$emit('changeParent',true);
+            //弹出提示
+            this.$Notice.warning({
+                name:'changeParent',
+                title: '变更上级',
+                duration: 0 , //设为0，不关闭该提示框
+                render: h => {
+                    return h('span', {
+                        style:{
+                            lineHeight:'30px'
+                        }
+                    },[
+                        h('p',{
+                            
+                        },[
+                            `请在左侧层级树里选中某节点，再点击确定`,
+                            h('p',[
+                                '当前选中的父级为:',
+                                h('b',{
+                                    style:{
+                                        color:'#2d8cf0'
+                                    }
+                                },this.newParentName)
+                            ])
+                        ]),
+                        h('Button',{
+                            props:{
+                                type:'primary',
+                            },
+                            style:{
+                                marginRight:'10px'
+                            },
+                            on: {
+                                click: ()=>{
+                                    if(!this.newParent){
+                                        this.$Notice.error({title:'还未选择父级！'});
+                                        return;
+                                    }
+                                    this.formItem.parentId = this.newParent;
+                                    this.save();
+                                    //关闭该提示
+                                    this.$Notice.close('changeParent');
+                                    //提示刷新
+                                    this.$Notice.info({title:'请刷新网页以获取最新层级'});
+                                }
+                            },
+                        },'确定'),
+                        h('Button',{
+                            on: {
+                                //点击取消就关闭这个提醒
+                                click: ()=>{
+                                    //触发取消变更父级事件
+                                    this.$emit('changeParent',false);
+                                    //清除已经选择过的父级
+                                    this.newParent = null;
+                                    this.newParentName = null;
+                                    //关闭该提示
+                                    this.$Notice.close('changeParent');
+                                } 
+                            },
+                        },'取消')
+                    ])
+                },
+                onClose:()=>{
+                    //当关闭时，触发取消变更父级事件
+                    this.$emit('changeParent',false);
+                    //清除已经选择过的父级
+                    this.newParent = null;
+                    this.newParentName = null;
+                }
+            });
+        },
     },
     props:['token','treeId'],
     watch:{},
