@@ -15,7 +15,7 @@
 <template>
     <div>
         <Layout :style="{minHeight:'460px',height:'inherit'}">
-            <Sider :style="{backgroundColor:'#fff'}">
+            <Sider :style="{backgroundColor:'#fff',marginRight:'5px'}" :width="treeWidth">
                 <div>
                         <AutoComplete v-model="title" :data="AutoCompleteData" @on-search="handleComplete" placeholder="请输入标题..." 
                         style="display:none;width:140px" id="btn1"></AutoComplete>
@@ -33,8 +33,9 @@
                         <a @click="hideSearch">[收起]</a>    
                     </p>
                 </div>
-                <div style="overflow:auto;padding-top:10px;">
+                <div style="overflow:auto;padding-top:10px">
                     <Button type="warning" @click="addRoot">添加根节点</Button>
+                    <Slider v-model="treeWidthPercentage" :style="{width:'200px'}"></Slider>
                     <Tree :data="treeData" :load-data="loadData" ref="tree" :render="renderContent" 
                         :style="{border:'1px solid #ccc',minHeight:'500px',overflow:'auto',marginTop:'10px'}">
                     </Tree>
@@ -66,11 +67,15 @@
                 selectedItem:null, //被选中的节点
                 treeData:[], //树的数据源
                 isChangeParent:false, //是否是变更上级
+                treeWidthPercentage:40
             }
         },
         computed:{
             searchedDataLength(){
                 return this.searchedData.length;
+            },
+            treeWidth(){
+                return 500*this.treeWidthPercentage/100;
             }
         },
         methods:{
@@ -120,23 +125,27 @@
                 //如果不是变更上级，正常查询
                 if(!this.isChangeParent){
                     if(item){
+                        //把以前被选中项的背景颜色清空
                         if(this.selectedItem&&this.selectedItem.treeId){
                             this.$$("#qaTree_"+this.selectedItem.treeId).css('background-color','');
                         }
+                        //赋值给已选择项
                         this.selectedItem = item;
+                        //给当前被选中的添加背景颜色
                         this.$$("#qaTree_"+this.selectedItem.treeId).css('background-color','#2d8cf038');
+                        //导航到当前选中
                         this.$router.push({name:'nodeview',params:{token:this.token,treeId:item.treeId}});
                     }else{
                         this.$router.push({name:'tree',params:{token:this.token}});
                     }
                 }else{
-                    //确保新父级不会是自己，且不会是知识页
-                    if(this.$refs.nodeview.treeId==item.treeId||item.isPage=='Y'){
-                        return
+                    //如果是变更上级，则把选中的信息传给详细页
+                    this.$refs.nodeview.newParent = {
+                        treeId:item.treeId,
+                        title:item.title,
+                        isPage:item.isPage,
+                        domain:item.domain
                     }
-                    //如果是变更上级，把子组件里的newParent设置为选中的treeid
-                    this.$refs.nodeview.newParent = item.treeId;
-                    this.$refs.nodeview.newParentName = item.title;
                 }
             },
             //通过id查找页面的方法

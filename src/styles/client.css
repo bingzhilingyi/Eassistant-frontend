@@ -101,6 +101,10 @@ ul {
     position: relative;
 }
 
+.leftpop>ul>li {
+    padding-top: 5px;
+}
+
 .notice_bar {
     width: 100%;
     position: absolute;

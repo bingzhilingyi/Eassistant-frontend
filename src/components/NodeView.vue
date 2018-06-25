@@ -21,9 +21,9 @@
             <Button type="primary" @click="loadData()" :loading='loading' :disabled="refreshDisabled">刷新</Button>
             <Button type="primary" @click="save" :loading='loading'>保存</Button>
             <Button type="warning" @click="deleteNode" :loading='loading' :disabled="delDisabled">删除</Button>
-            <span class="notice" :class="hideFather">如添加节点后左侧树没有更新，请刷新网页</span>
+            <span class="notice" :class="hideFather">如保存后左侧树没有更新，请刷新网页</span>
         </ButtonGroup>
-        <Form :model="formItem" :label-width="60" ref="treeEdit" inline>
+        <Form :model="formItem" :label-width="60" :rules="ruleNode" ref="treeEdit" inline>
             <FormItem label="标题" prop="title">
                 <Input v-model="formItem.title" style="width: 200px"></Input>
             </FormItem>
@@ -31,13 +31,16 @@
                 <RadioGroup v-model="formItem.isPage">
                     <Radio label="Y">知识页</Radio>
                     <Radio label="N">节点</Radio>
-                    <Tooltip content="知识页不能创建下级" placement="top">
+                    <Tooltip content="知识页不能创建下级" placement="top" :style="{verticalAlign:'sub'}">
                         <Icon type="ios-help-outline" size="18"></Icon>
                     </Tooltip>
                 </RadioGroup>
             </FormItem>
             <FormItem label="热度">
                 <b style="color:red">{{formItem.rank}}</b>
+            </FormItem>
+            <FormItem label="域" prop="domain">
+                <Input v-model="formItem.domain" style="width: 100px" :disabled="domainDisabled"></Input>
             </FormItem>
             <FormItem label="父级" :class="hideFather">
                 <b>{{formItem.parentName}}</b>
@@ -57,13 +60,17 @@ export default {
             delDisabled:false, //删除按钮是否可用
             refreshDisabled:false, //刷新按钮是否可用
             changeParentDisabled:false,//变更上级是否可用
+            domainDisabled:true,//域是否可填写
             hideFather:'hideFather', //父级的类
             loading:false, //按钮是否在加载中
             formItem:{
                 qaPage:{}
             },
-            newParent:null, //新选择的父级id
-            newParentName:null
+            newParent:{}, //新选择的父级
+            ruleNode:{
+                //domain:[{required:true,message:'域不能为空！'}],
+                title:[{required:true,message:'标题不能为空！'}]
+            }
         }
     },
     computed:{},
@@ -74,12 +81,14 @@ export default {
             var treeId = to?to.params.treeId:this.treeId;
             //如果是新建，则不查询数据,且只使用保存按钮
             if(treeId=='new'){
-                let parentId = this.$route.query.parentId;
-                let parentName = this.$route.query.parentName;
+                let parentId = this.$route.query.parentId; //父级id
+                let parentName = this.$route.query.parentName; //父级名称
+                let parentDomain = this.$route.query.parentDomain; //父级域，子集继承父级的域
                 //如果传入了to，就使用to的数据
                 if(to&&to.query){
                     parentId = to.query.parentId;
                     parentName = to.query.parentName;
+                    parentDomain = to.query.parentDomain;
                 }
                 //定义新增的初始数据
                 this.formItem = {
@@ -88,6 +97,7 @@ export default {
                     parentId:parentId,
                     parentName:parentName,
                     rank:0,
+                    domain:parentDomain,
                     qaPage:{
                         content:'# 请输入内容'
                     }
@@ -99,6 +109,8 @@ export default {
                 this.refreshDisabled = true;
                 this.delDisabled = true;
                 this.changeParentDisabled = true;
+                //如果新建的是根节点，域可编辑，否则不允许编辑域
+                this.domainDisabled = parentId!=0;
                 return;
             }else{
                 //隐藏父级
@@ -108,6 +120,8 @@ export default {
                 this.refreshDisabled = false;
                 this.delDisabled = false;
                 this.changeParentDisabled = false;
+                //不允许编辑域
+                this.domainDisabled = true;
             }
             //按钮设置为不可用
             this.loading = true;
@@ -154,57 +168,58 @@ export default {
         },
         //保存节点信息变更
         save(){
-            //默认为update，如果是新建，更换为save
-            var type = this.treeId=='new'?'save':'update';
-            var method = this.treeId=='new'?'POST':'PUT';
-            //把标题里的所有空格去掉
-            var reg = new RegExp(" ","g");//g,表示全部替换。
-            var title = this.formItem.title.replace(reg,"");
-            this.formItem.title = title;
-            //把页面title设置为节点title，并验证title是否存在
-            if(!this.formItem.title){
-                this.$Notice.error({
-                    title: '标题不能为空！'
-                });
-                return;
-            }
-            this.formItem.qaPage.title = this.formItem.title;
-            //取到md的html内容作为页面的htmlContent
-            this.formItem.qaPage.htmlContent = this.$refs.mvEditor.d_render;
-            //按钮设为不可用
-            this.loading = true;
-            //发起保存请求
-            this.$axios({
-                url:`${this.userServicePath}/tree/${type}`,
-                data:this.$qs.stringify({
-                    node:JSON.stringify(this.formItem),
-                    token:this.token,
-                    _method: method
-                }),
-                method:'post'
-            }).then((Response)=>{
-                let data = Response.data;
-                if(data&&data.status=='success'){
-                    this.$Notice.success({
-                        title: '保存成功',
-                        desc: data.message
-                    });
-                    //触发更新树事件
-                    this.$emit('updateTree',data.content);
-                    //导航到新保存的页面
-                    this.$router.push({name:'nodeview',params:{token:this.token,treeId:data.content.treeId}});
-                }else{
-                    this.$Notice.error({
-                        title: '保存失败',
-                        desc: data.message
-                    });
+            this.$refs['treeEdit'].validate((valid) => {
+                //按钮设为不可用
+                this.loading = true;
+                if(valid){
+                    //默认为update，如果是新建，更换为save
+                    var type = this.treeId=='new'?'save':'update';
+                    var method = this.treeId=='new'?'POST':'PUT';
+                    //把标题里的所有空格去掉
+                    var reg = new RegExp(" ","g");//g,表示全部替换。
+                    var title = this.formItem.title.replace(reg,"");
+                    this.formItem.title = title;
+                    this.formItem.qaPage.title = this.formItem.title;
+                    //取到md的html内容作为页面的htmlContent
+                    this.formItem.qaPage.htmlContent = this.$refs.mvEditor.d_render;
+                    //发起保存请求
+                    this.$axios({
+                        url:`${this.userServicePath}/tree/${type}`,
+                        data:this.$qs.stringify({
+                            node:JSON.stringify(this.formItem),
+                            token:this.token,
+                            _method: method
+                        }),
+                        method:'post'
+                    }).then((Response)=>{
+                        let data = Response.data;
+                        if(data&&data.status=='success'){
+                            this.$Notice.success({
+                                title: '保存成功',
+                                desc: data.message
+                            });
+                            //触发更新树事件
+                            this.$emit('updateTree',data.content);
+                            //导航到新保存的页面
+                            this.$router.push({name:'nodeview',params:{token:this.token,treeId:data.content.treeId}});
+                        }else{
+                            this.$Notice.error({
+                                title: '保存失败',
+                                desc: data.message
+                            });
+                        }
+                        this.loading = false;
+                    }).catch((err)=>{
+                        this.$Notice.error({
+                            title: '保存出现异常'
+                        });
+                        this.loading = false;
+                    })
+                }else {
+                    this.$Message.error('保存失败，请检查输入信息');
+                    //设置登录按钮登录不在登录中
+                    this.loading = false;
                 }
-                this.loading = false;
-            }).catch((err)=>{
-                this.$Notice.error({
-                    title: '保存出现异常'
-                });
-                this.loading = false;
             })
         },
         //删除节点
@@ -247,13 +262,15 @@ export default {
         addChild(){
             var parentId = this.formItem.treeId;
             var parentName = this.formItem.title;
+            var parentDomain = this.formItem.domain;
             //路由到添加下级
             this.$router.push({
                 name:'nodeview',
                 params:{token:this.token,treeId:'new'},
                 query:{
-                    parentId:parentId,
-                    parentName:parentName
+                    parentId:parentId, //父级id
+                    parentName:parentName, //父级名称（用于显示）
+                    parentDomain:parentDomain //父级的域，继承给子集
                 }
             });
         },
@@ -297,6 +314,8 @@ export default {
             };
             //触发更换上级事件
             this.$emit('changeParent',true);
+            //按钮全部设置为加载中
+            this.loading = true;
             //弹出提示
             this.$Notice.warning({
                 name:'changeParent',
@@ -318,7 +337,7 @@ export default {
                                     style:{
                                         color:'#2d8cf0'
                                     }
-                                },this.newParentName)
+                                },this.newParent.title)
                             ])
                         ]),
                         h('Button',{
@@ -330,16 +349,35 @@ export default {
                             },
                             on: {
                                 click: ()=>{
-                                    if(!this.newParent){
+                                    //确保如下条件：
+                                    //  1.新父级不为空
+                                    //  2.新父级不是自己
+                                    //  3.新父级不是知识页
+                                    //  4.新父级不是别的域
+                                    if(!this.newParent.treeId){
                                         this.$Notice.error({title:'还未选择父级！'});
                                         return;
+                                    } else if(this.formItem.treeId==this.newParent.treeId){
+                                        this.$Notice.error({title:'不能选自己为新父级！'});
+                                        return
+                                    }else if(this.formItem.domain!=this.newParent.domain){
+                                        this.$Notice.error({title:'不能选择别的域作为父级！'});
+                                        return
+                                    }else if(this.newParent.isPage=='Y'){
+                                        this.$Notice.error({title:'不能选知识页作为父级！'});
+                                        return
                                     }
-                                    this.formItem.parentId = this.newParent;
+                                    //保存变更
+                                    this.formItem.parentId = this.newParent.treeId;
                                     this.save();
                                     //关闭该提示
                                     this.$Notice.close('changeParent');
                                     //提示刷新
                                     this.$Notice.info({title:'请刷新网页以获取最新层级'});
+                                    //触发取消变更父级事件
+                                    this.$emit('changeParent',false);
+                                    //清除已经选择过的父级
+                                    this.newParent = {};
                                 }
                             },
                         },'确定'),
@@ -350,22 +388,17 @@ export default {
                                     //触发取消变更父级事件
                                     this.$emit('changeParent',false);
                                     //清除已经选择过的父级
-                                    this.newParent = null;
-                                    this.newParentName = null;
+                                    this.newParent = {};
                                     //关闭该提示
                                     this.$Notice.close('changeParent');
+                                    //按钮可用
+                                    this.loading = false;
                                 } 
                             },
                         },'取消')
                     ])
                 },
-                onClose:()=>{
-                    //当关闭时，触发取消变更父级事件
-                    this.$emit('changeParent',false);
-                    //清除已经选择过的父级
-                    this.newParent = null;
-                    this.newParentName = null;
-                }
+                onClose:()=>{}
             });
         },
     },
