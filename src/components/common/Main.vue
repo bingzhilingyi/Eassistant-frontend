@@ -44,28 +44,15 @@
             </Header>
             <Layout :style="{minHeight:'500px'}">
                 <Sider collapsible collapsed-width="0">
-                    <Menu ref="leftMenu" :active-name="menuActive" theme="dark" width="auto" :open-names="['userManager','knowledgeManager','clientTest']" @on-select="routeTo">
-                        <Submenu name="userManager">
+                    <Menu ref="leftMenu" :active-name="menuActive" theme="dark" width="auto" :open-names="openMenus" @on-select="routeTo">
+                        <Submenu v-for="menu in menus" :name="menu.key" :key="menu.key">
                             <template slot="title">
-                                <Icon type="android-contact"></Icon>
-                                用户管理
+                                <Icon :type="menu.iconType"></Icon>
+                                {{menu.label}}
                             </template>
-                            <MenuItem name="userList">用户列表</MenuItem>
-                            <MenuItem name="userEdit">用户编辑</MenuItem>
-                        </Submenu>
-                        <Submenu name="knowledgeManager">
-                            <template slot="title">
-                                <Icon type="ios-keypad"></Icon>
-                                知识页管理
-                            </template>
-                            <MenuItem name="tree">知识页管理</MenuItem>
-                        </Submenu>
-                        <Submenu name="clientTest">
-                            <template slot="title">
-                                <Icon type="bug"></Icon>
-                                客户端测试
-                            </template>
-                            <MenuItem name="client">客户端</MenuItem>
+                            <MenuItem v-for="menuItem in menu.child" :name="menuItem.key" :key="menuItem.key">
+                                {{menuItem.label}}
+                            </MenuItem>
                         </Submenu>
                     </Menu>
                 </Sider>
@@ -82,15 +69,25 @@
     </div>
 </template>
 <script>
-    import servicePaths from '../../router/path'
+    import servicePaths from '../../router/path';
+    import conf from '../../data/config.js';
     export default {
         data(){
             return {
+                menus:conf.menu(), //所有菜单属性
                 ...servicePaths(),
                 menuActive:this.userList
             }
         },
         computed:{
+            //自动展开的菜单
+            openMenus(){
+                let openMenus = [];
+                for(let i=0;i<this.menus.length;i++){
+                    openMenus.push(this.menus[i].key);
+                }
+                return openMenus;
+            }
         },
         props:['token'], //设置组件接收的props
         methods:{
@@ -98,6 +95,8 @@
                 //如果是用户编辑，需要添加额外的param
                 if(e==='userEdit'){
                     this.$router.push({name:e,params:{token:this.token,userId:'hold'}});
+                }else if(e==='groupEdit'){
+                    this.$router.push({name:e,params:{token:this.token,groupId:'hold'}});
                 }else{
                     this.$router.push({name:e,params:{token:this.token}});
                 }

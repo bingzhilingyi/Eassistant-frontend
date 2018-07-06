@@ -3,12 +3,12 @@
 
 <template>
     <div>
-        <Input v-model="searchValue" placeholder="请输入账号或姓名进行查询..." size='large'>
-            <Button slot="prepend" @click="gotoUserAdd">点我添加新用户</Button>
-            <Button slot="append" icon="ios-search" @click="searchUser"></Button>
+        <Input v-model="searchValue" placeholder="请输入权限组名进行查询..." size='large'>
+            <Button slot="prepend" @click="gotoGroupAdd">点我添加新权限组</Button>
+            <Button slot="append" icon="ios-search" @click="searchGroup"></Button>
         </Input>
         <br>
-        <Table :columns="userColumn" :data="userData" :loading="isLoading" stripe border></Table>
+        <Table :columns="groupColumn" :data="groupData" :loading="isLoading" stripe border></Table>
         <br>
         <div style="float: right;">
             <Page :total="totalElements" :current="currentPage" :page-size="pageSize" @on-change="changePage" show-total show-elevator size="small"></Page>
@@ -32,7 +32,7 @@
 
 <script>
     import servicePaths from '../router/path'
-    import store from '../store/UserList-store'
+    import store from '../store/GroupList-store'
     // 在单独构建的版本中辅助函数为 Vuex.mapState
     import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
 	export default {
@@ -41,30 +41,14 @@
 			return {
                 ...servicePaths(),
                 searchValue: '', //查询条件
-                userColumn : [
+                groupColumn : [
                     {
                         title: 'ID',
-                        key: 'userId'
+                        key: 'groupId'
                     },
                     {
-                        title: '账号',
-                        key: 'userAccount'
-                    },
-                    {
-                        title: '姓名',
-                        key: 'userName'
-                    },
-                    {
-                        title: '邮箱',
-                        key: 'userEmail'
-                    },
-                    {
-                        title: '电话',
-                        key: 'userPhone'
-                    },
-                    {
-                        title: 'ldap账号',
-                        key: 'userLdap'
+                        title: '权限组名称',
+                        key: 'groupName'
                     },
                     {
                         title: '操作',
@@ -83,7 +67,7 @@
                                     },
                                     on: {
                                         click: () => {
-                                            this.editUser(params.index)
+                                            this.editGroup(params.index)
                                         }
                                     }
                                 }, '编辑'),
@@ -106,7 +90,7 @@
                     }
                 ],
                 //表格内容定义
-                userData: [],
+                groupData: [],
 			}
         },
         computed:{
@@ -144,26 +128,19 @@
                 'setRowIndex'  //当前转中行
             ]),
             //查询方法
-            searchUser(){
+            searchGroup(){
                 //表格设置为加载中
                 this.setLoading(true);
-                //默认查询结果不为slice，即不需要查询总数量
-                var isSlice = false;
-                //如果历史查询条件存在且与现在的一样，说明只是翻页，不需要再获取总条目数量，这样就加上isSlice=true,加快效率
-                if(this.historyValue&&this.historyValue===this.searchValue){
-                    isSlice = true;
-                }
                 //把现在的查询条件传给历史查询条件
                 this.setHistoryValue(this.searchValue);
                 
                 this.$axios({
-                    url:`${this.userServicePath}/user/findPagedByAccountOrName`,
+                    url:`${this.userServicePath}/group/findByGroupNameLike`,
                     method:'get',
                     params:{
-                        account:this.searchValue, //查询条件
+                        groupName:this.searchValue, //查询条件
                         page:this.currentPage-1, //实际页从0开始，所以要-1
                         size:this.pageSize, //每页大小
-                        isSlice:isSlice, //是否是翻页
                         token:this.token
                     }
                 }).then((response)=>{
@@ -171,11 +148,8 @@
                     //返回success，登录成功
                     if(data.status==='success'){
                         //接收数据
-                        this.userData = data.content;
-                        //如果查询条件isSlice==false时，更新总条目数
-                        if(!isSlice){
-                            this.setTotalElements(data.totalElements)
-                        }
+                        this.groupData = data.content;
+                        this.setTotalElements(data.totalElements);
                     }else{
                         this.$Notice.error({
                             title: '查询失败',
@@ -196,23 +170,23 @@
             //翻页方法
             changePage(p){
                 this.setCurrentPage(p);
-                this.searchUser();
+                this.searchgroup();
             },
             //跳到用户编辑页
-            editUser (index) {
+            editGroup (index) {
                 //触发切换菜单事件，把菜单切换到用户编辑
-                this.$emit('changeMenu','userEdit');
-                //获取userid
-                var userid = this.userData[index].userId;
-                //导航到用户编辑页，传需要编辑的userid
-                this.$router.push({name:`userEdit`,params:{token:this.token,userId:userid}});
+                this.$emit('changeMenu','groupEdit');
+                //获取groupid
+                var groupid = this.groupData[index].groupId;
+                //导航到用户编辑页，传需要编辑的groupid
+                this.$router.push({name:`groupEdit`,params:{token:this.token,groupId:groupid}});
             },
             //删除用户
             remove (index) {
-                var id = this.userData[index].userId;
+                var id = this.groupData[index].groupId;
                 
                 this.$axios({
-                    url:`${this.userServicePath}/user/delete/${id}`,
+                    url:`${this.groupServicePath}/group/delete/${id}`,
                     method:'post',
                     data:this.$qs.stringify({
                         token:this.token,
@@ -229,7 +203,7 @@
                         //总数减一
                         this.setTotalElements(this.totalElements-1);
                         //把这行数据删掉
-                        this.userData.splice(index, 1);
+                        this.groupData.splice(index, 1);
                     }else{
                         this.$Notice.error({
                             title: '删除失败',
@@ -248,11 +222,11 @@
                 });
             },
             //跳转到添加新用户
-            gotoUserAdd(){
+            gotoGroupAdd(){
                 //触发切换菜单事件，把菜单切换到用户编辑
-                this.$emit('changeMenu','userEdit');
+                this.$emit('changeMenu','groupEdit');
                 //导航到新增用户
-                this.$router.push({name:`userEdit`,params:{token:this.token,userId:'new'}});
+                this.$router.push({name:`groupEdit`,params:{token:this.token,groupId:'new'}});
             }
         }
 	}

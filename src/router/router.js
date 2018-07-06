@@ -28,14 +28,14 @@ const routes = [{
             default: Main
         },
         children: [{
-            path: 'editor',
-            name: 'editor',
-            component: resolve => require(['../components/MarkDown-editor.vue'], resolve),
+            path: 'groupList',
+            name: 'groupList',
+            component: resolve => require(['../components/GroupList.vue'], resolve),
             props: true
         }, {
-            path: 'view',
-            name: 'view',
-            component: resolve => require(['../components/MarkDown-view.vue'], resolve),
+            path: 'groupEdit/:groupId',
+            name: 'groupEdit',
+            component: resolve => require(['../components/GroupEdit.vue'], resolve),
             props: true
         }, {
             path: 'userList',
@@ -66,6 +66,11 @@ const routes = [{
             path: 'client',
             name: 'client',
             component: resolve => require(['../components/Client.vue'], resolve),
+            props: true
+        }, {
+            path: 'dataVisualization',
+            name: 'dataVisualization',
+            component: resolve => require(['../components/DataVisualization.vue'], resolve),
             props: true
         }]
     }

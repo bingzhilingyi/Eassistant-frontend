@@ -120,9 +120,14 @@
                             let data = response.data;
                             //返回success，登录成功
                             if(data.status==='success'){
-                                this.$Message.success('登录成功，欢迎您!');
-                                //路由跳转到main
-                                this.$router.push({name: `main`,params:{token:data.token}});
+                                //如果token不为空，说明登录成功
+                                if(data.token!=null&&data.token!=''){
+                                    this.$Message.success('登录成功，欢迎您!');
+                                    //路由跳转到main
+                                    this.$router.push({name: `main`,params:{token:data.token}});
+                                }else{
+                                    this.$Message.error(data.message);
+                                }
                             }else{
                                 this.$Message.error(data.message);
                             }
