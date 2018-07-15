@@ -5,10 +5,10 @@ const conf = {
                 iconType: 'android-contact',
                 label: '权限管理',
                 child: [
-                    { key: 'userList', label: '用户列表' },
-                    { key: 'userEdit', label: '用户编辑' },
-                    { key: 'groupList', label: '权限组列表' },
-                    { key: 'groupEdit', label: '权限组编辑' },
+                    { key: 'userList', label: '用户管理' },
+                    // { key: 'userEdit', label: '用户编辑' },
+                    { key: 'groupList', label: '角色管理' },
+                    // { key: 'groupEdit', label: '权限组编辑' },
                 ]
             },
             {

@@ -104,6 +104,7 @@
                 'setLoading'
             ]),
             handleSubmit() {
+                var aa = this;
                 this.$refs['formLogin'].validate((valid) => {
                     //设置登录按钮在登录中
                     this.setLoading(true);

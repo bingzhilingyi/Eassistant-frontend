@@ -127,7 +127,7 @@ export default {
             this.loading = true;
             
             this.$axios({
-                url:`${this.userServicePath}/tree/getById/${treeId}`,
+                url:`${this.userServicePath}/tree/findById/${treeId}`,
                 params:{
                     token:this.token
                 },

@@ -106,6 +106,7 @@
             //vuex getter map
 			...mapGetters([
             ]),
+            //是否显示删除提示框
             showDeleteWarn:{
                 get () {
                     return this.$store.state.showDeleteWarn
@@ -133,7 +134,7 @@
                 this.setLoading(true);
                 //把现在的查询条件传给历史查询条件
                 this.setHistoryValue(this.searchValue);
-                
+                //查询
                 this.$axios({
                     url:`${this.userServicePath}/group/findByGroupNameLike`,
                     method:'get',
@@ -149,6 +150,7 @@
                     if(data.status==='success'){
                         //接收数据
                         this.groupData = data.content;
+                        //更新总条目
                         this.setTotalElements(data.totalElements);
                     }else{
                         this.$Notice.error({
@@ -169,8 +171,8 @@
             },
             //翻页方法
             changePage(p){
-                this.setCurrentPage(p);
-                this.searchgroup();
+                this.setCurrentPage(p); //设置当前页
+                this.searchgroup(); //查询一次
             },
             //跳到用户编辑页
             editGroup (index) {
@@ -183,10 +185,11 @@
             },
             //删除用户
             remove (index) {
+                //获取id
                 var id = this.groupData[index].groupId;
-                
+                //执行删除
                 this.$axios({
-                    url:`${this.groupServicePath}/group/delete/${id}`,
+                    url:`${this.userServicePath}/group/delete/${id}`,
                     method:'post',
                     data:this.$qs.stringify({
                         token:this.token,
@@ -198,7 +201,7 @@
                     if(data.status==='success'){
                         this.$Notice.success({
                             title: '删除成功',
-                            desc: '用户已成功删除'
+                            desc: '角色已成功删除'
                         });
                         //总数减一
                         this.setTotalElements(this.totalElements-1);

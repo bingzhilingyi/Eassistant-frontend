@@ -86,9 +86,9 @@
                 this.loadTree(item.treeId,callback);
             },
             //通过父id读取子节点
-            loadTree (parentId,callback){
+            loadTree (parentId,callback,url){
                 this.$axios({
-                    url:`${this.userServicePath}/tree/getByParentId/${parentId}`,
+                    url: url?url:`${this.userServicePath}/tree/findByParentId/${parentId}`,
                     params:{
                         token:this.token
                     },
@@ -236,7 +236,7 @@
                     this.isHide = false;
                     this.isLoading = true;
                     this.$axios({
-                        url:`${this.userServicePath}/tree/getPagedByTitleLike`,
+                        url:`${this.userServicePath}/tree/findPagedByTitleLike`,
                         params:{
                             token:this.token,
                             title:this.title,

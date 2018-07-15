@@ -3,8 +3,12 @@
 
 <template>
     <div>
-        <Input v-model="searchValue" placeholder="请输入账号或姓名进行查询..." size='large'>
-            <Button slot="prepend" @click="gotoUserAdd">点我添加新用户</Button>
+        <Input v-model="searchValue" :placeholder="placeholder" size='large'>
+            <Button slot="prepend" @click="gotoUserAdd" :style="{borderRight:'1px solid rgb(221, 222, 225)'}">点我添加新用户</Button>
+            <Select v-model="searchType" slot="prepend" style="width: 150px">
+                <Option value="account">账号或姓名</Option>
+                <Option value="group">角色</Option>
+            </Select>
             <Button slot="append" icon="ios-search" @click="searchUser"></Button>
         </Input>
         <br>
@@ -117,7 +121,8 @@
                 'currentPage', //当前页
                 'pageSize', //每页大小
                 'isLoading',  //是否正在查询
-                'rowIndex' //正在操作的表格行数
+                'rowIndex', //正在操作的表格行数
+                'placeholder' //输入框提示
             ]),
             //vuex getter map
 			...mapGetters([
@@ -128,6 +133,14 @@
                 },
                 set (value) {
                     this.$store.commit('setShowDeleteWarn', value)
+                }
+            },
+            searchType:{
+                get () {
+                    return this.$store.state.searchType
+                },
+                set (value) {
+                    this.$store.commit('setSearchType', value)
                 }
             }
         },
@@ -147,15 +160,6 @@
             searchUser(){
                 //表格设置为加载中
                 this.setLoading(true);
-                //默认查询结果不为slice，即不需要查询总数量
-                var isSlice = false;
-                //如果历史查询条件存在且与现在的一样，说明只是翻页，不需要再获取总条目数量，这样就加上isSlice=true,加快效率
-                if(this.historyValue&&this.historyValue===this.searchValue){
-                    isSlice = true;
-                }
-                //把现在的查询条件传给历史查询条件
-                this.setHistoryValue(this.searchValue);
-                
                 this.$axios({
                     url:`${this.userServicePath}/user/findPagedByAccountOrName`,
                     method:'get',
@@ -163,7 +167,7 @@
                         account:this.searchValue, //查询条件
                         page:this.currentPage-1, //实际页从0开始，所以要-1
                         size:this.pageSize, //每页大小
-                        isSlice:isSlice, //是否是翻页
+                        searchType:this.searchType, //查询方式
                         token:this.token
                     }
                 }).then((response)=>{
@@ -172,10 +176,8 @@
                     if(data.status==='success'){
                         //接收数据
                         this.userData = data.content;
-                        //如果查询条件isSlice==false时，更新总条目数
-                        if(!isSlice){
-                            this.setTotalElements(data.totalElements)
-                        }
+                        //更新总条目
+                        this.setTotalElements(data.totalElements)
                     }else{
                         this.$Notice.error({
                             title: '查询失败',
