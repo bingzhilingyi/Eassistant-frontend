@@ -123,7 +123,6 @@
                     }
                 }).then((response)=>{
                     let data = response.data;
-                    debugger;
                     //返回success，删除成功
                     if(data.status==='success'){
                         //筛选有权限的菜单

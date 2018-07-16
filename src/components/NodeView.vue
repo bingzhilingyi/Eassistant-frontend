@@ -23,27 +23,45 @@
             <Button type="warning" @click="deleteNode" :loading='loading' :disabled="delDisabled">删除</Button>
             <span class="notice" :class="hideFather">如保存后左侧树没有更新，请刷新网页</span>
         </ButtonGroup>
-        <Form :model="formItem" :label-width="60" :rules="ruleNode" ref="treeEdit" inline>
+        <Form :model="formItem" :label-width="100" :rules="ruleNode" ref="treeEdit" inline>
             <FormItem label="标题" prop="title">
                 <Input v-model="formItem.title" style="width: 200px"></Input>
             </FormItem>
-            <FormItem label="类型">
-                <RadioGroup v-model="formItem.isPage">
-                    <Radio label="Y">知识页</Radio>
-                    <Radio label="N">节点</Radio>
-                    <Tooltip content="知识页不能创建下级" placement="top" :style="{verticalAlign:'sub'}">
-                        <Icon type="ios-help-outline" size="18"></Icon>
-                    </Tooltip>
-                </RadioGroup>
+            <FormItem label="知识页">
+                <Switch v-model="isPage" @on-change="isPageChange">
+                    <span slot="open">是</span>
+                    <span slot="close">否</span>
+                </Switch>
+            </FormItem>
+            <FormItem label="域" prop="domain">
+                <template v-if="domainDisabled">
+                    <b style="color:red">{{formItem.domain}}</b>
+                </template>
+                <template v-else>
+                    <Input v-model="formItem.domain" style="width: 100px" :disabled="domainDisabled"></Input>
+                </template>
             </FormItem>
             <FormItem label="热度">
                 <b style="color:red">{{formItem.rank}}</b>
             </FormItem>
-            <FormItem label="域" prop="domain">
-                <Input v-model="formItem.domain" style="width: 100px" :disabled="domainDisabled"></Input>
+            <br>
+            <FormItem label="标签">
+                <template v-for="(keyword,index) in formItem.qaTreeKeyword">
+                    <template v-if="keyword.keywordName!=''">
+                        <Tag closable v-bind:key="index" @on-close="handleKeywordClose(index)">
+                            {{keyword.keywordName}}
+                        </Tag>
+                    </template>
+                </template>
+                <Input v-model="newKeyword.name"  style="width: 200px" v-if="!newKeyword.hidden">
+                    <Button slot="append" icon="checkmark"  @click="checkNewkeyword()"></Button>
+                    <Button slot="append" icon="close" @click="clearNewkeyword()"></Button>             
+                </Input>
+                <Button type="text" icon="plus" @click="addKeywords(0)" v-if="newKeyword.hidden">添加标签</Button>
             </FormItem>
+            <br>
             <FormItem label="父级" :class="hideFather">
-                <b>{{formItem.parentName}}</b>
+                <b style="color:red">{{formItem.parentName}}</b>
             </FormItem>
         </Form>
         <mavon-editor v-model="formItem.qaPage.content" ref="mvEditor" @imgAdd="$imgAdd"></mavon-editor>
@@ -64,16 +82,26 @@ export default {
             hideFather:'hideFather', //父级的类
             loading:false, //按钮是否在加载中
             formItem:{
-                qaPage:{}
+                qaPage:{},
+                qaTreeKeyword:[], //已有关键字
             },
             newParent:{}, //新选择的父级
             ruleNode:{
-                //domain:[{required:true,message:'域不能为空！'}],
+                domain:[{required:true,message:'域不能为空！'}],
                 title:[{required:true,message:'标题不能为空！'}]
+            },
+            newKeyword:{
+                name:'',
+                index:0,
+                hidden:true
             }
         }
     },
-    computed:{},
+    computed:{
+        isPage(){
+            return this.formItem.isPage==='Y';
+        }
+    },
     methods:{
         //加载节点信息，如果传入id，则加载该id的信息
         loadData(to){
@@ -140,6 +168,10 @@ export default {
                     //如果查询结果不含page信息，就初始化page为空对象
                     if(!this.formItem.qaPage){
                         this.formItem.qaPage = {};
+                    };
+                    //如果查询结果不含关键字信息，就初始化qaTreeKeyword为空数组
+                    if(!this.formItem.qaTreeKeyword){
+                        this.formItem.qaTreeKeyword = [];
                     };
                     //如果是页面，使添加下级按钮不可用
                     if(this.formItem.isPage=='Y'){
@@ -401,6 +433,42 @@ export default {
                 onClose:()=>{}
             });
         },
+        //是否是知识页的开关效果
+        isPageChange(status){
+            this.formItem.isPage = status?'Y':'N';
+        },
+        //点添加标签效果
+        addKeywords(index){
+            if(!this.newKeyword.hidden){
+                return;
+            }
+            //否则显示
+            this.newKeyword.hidden = false;
+            this.newKeyword.name = '';
+            this.newKeyword.index = index?index:this.formItem.qaTreeKeyword.length;
+        },
+        //标签删除效果
+        handleKeywordClose(index){
+            this.formItem.qaTreeKeyword.splice(index,1);
+        },
+        //新标签点取消效果
+        clearNewkeyword(){
+            this.newKeyword.hidden = true;
+            this.newKeyword.name = '';
+            this.newKeyword.index = 0;
+        },
+        //新标签点确定效果
+        checkNewkeyword(){
+            //如果新标签没有写，返回
+            if(!this.newKeyword.name){
+                return;
+            }
+            let newKey = {keywordName:this.newKeyword.name};
+            //把新标签添加进数据里
+            this.formItem.qaTreeKeyword.splice(this.newKeyword.index,1,newKey);
+            //隐藏输入框
+            this.clearNewkeyword();
+        }
     },
     props:['token','treeId'],
     watch:{},
