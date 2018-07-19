@@ -28,7 +28,7 @@
                 <Input v-model="formItem.title" style="width: 200px"></Input>
             </FormItem>
             <FormItem label="知识页">
-                <Switch v-model="isPage" @on-change="isPageChange">
+                <Switch v-model="isPage">
                     <span slot="open">是</span>
                     <span slot="close">否</span>
                 </Switch>
@@ -46,10 +46,10 @@
             </FormItem>
             <br>
             <FormItem label="标签">
-                <template v-for="(keyword,index) in formItem.qaTreeKeyword">
-                    <template v-if="keyword.keywordName!=''">
+                <template v-for="(keywordName,index) in nowKeyword">
+                    <template v-if="keywordName!=''">
                         <Tag closable v-bind:key="index" @on-close="handleKeywordClose(index)">
-                            {{keyword.keywordName}}
+                            {{keywordName}}
                         </Tag>
                     </template>
                 </template>
@@ -83,13 +83,14 @@ export default {
             loading:false, //按钮是否在加载中
             formItem:{
                 qaPage:{},
-                qaTreeKeyword:[], //已有关键字
+                //qaTreeKeyword:[], //已有关键字
             },
             newParent:{}, //新选择的父级
             ruleNode:{
                 domain:[{required:true,message:'域不能为空！'}],
                 title:[{required:true,message:'标题不能为空！'}]
             },
+            nowKeyword:[],
             newKeyword:{
                 name:'',
                 index:0,
@@ -98,8 +99,13 @@ export default {
         }
     },
     computed:{
-        isPage(){
-            return this.formItem.isPage==='Y';
+        isPage:{
+            get(){
+                return this.formItem.isPage==='Y';
+            },
+            set(value){
+                this.formItem.isPage = value?"Y":"N";
+            }           
         }
     },
     methods:{
@@ -128,7 +134,8 @@ export default {
                     domain:parentDomain,
                     qaPage:{
                         content:'# 请输入内容'
-                    }
+                    },
+                    //qaTreeKeyword:[], //已有关键字
                 }
                 //显示父级
                 this.hideFather = '';
@@ -169,10 +176,13 @@ export default {
                     if(!this.formItem.qaPage){
                         this.formItem.qaPage = {};
                     };
-                    //如果查询结果不含关键字信息，就初始化qaTreeKeyword为空数组
-                    if(!this.formItem.qaTreeKeyword){
-                        this.formItem.qaTreeKeyword = [];
-                    };
+                    //取关键字信息组成数组
+                    this.nowKeyword = [];
+                    for(let i=1;i<6;i++){
+                        if(this.formItem['label'+i]){
+                            this.nowKeyword.push(this.formItem['label'+i]);
+                        }
+                    }
                     //如果是页面，使添加下级按钮不可用
                     if(this.formItem.isPage=='Y'){
                         this.addDisabled = true;
@@ -212,6 +222,15 @@ export default {
                     var title = this.formItem.title.replace(reg,"");
                     this.formItem.title = title;
                     this.formItem.qaPage.title = this.formItem.title;
+
+                    //标签赋值
+                    for(let i=0;i<5;i++){
+                        if(i<this.nowKeyword.length)
+                           this.formItem['label'+(i+1)] = this.nowKeyword[i];
+                        else
+                            this.formItem['label'+(i+1)]='';
+                    }
+                    
                     //取到md的html内容作为页面的htmlContent
                     this.formItem.qaPage.htmlContent = this.$refs.mvEditor.d_render;
                     //发起保存请求
@@ -433,23 +452,22 @@ export default {
                 onClose:()=>{}
             });
         },
-        //是否是知识页的开关效果
-        isPageChange(status){
-            this.formItem.isPage = status?'Y':'N';
-        },
         //点添加标签效果
         addKeywords(index){
             if(!this.newKeyword.hidden){
+                return;
+            }else if(this.nowKeyword.length===5){
+                this.$Notice.info({title:'最多可以添加5个标签！'});
                 return;
             }
             //否则显示
             this.newKeyword.hidden = false;
             this.newKeyword.name = '';
-            this.newKeyword.index = index?index:this.formItem.qaTreeKeyword.length;
+            this.newKeyword.index = index?index:this.nowKeyword.length;
         },
         //标签删除效果
         handleKeywordClose(index){
-            this.formItem.qaTreeKeyword.splice(index,1);
+            this.nowKeyword.splice(index,1);
         },
         //新标签点取消效果
         clearNewkeyword(){
@@ -463,9 +481,8 @@ export default {
             if(!this.newKeyword.name){
                 return;
             }
-            let newKey = {keywordName:this.newKeyword.name};
             //把新标签添加进数据里
-            this.formItem.qaTreeKeyword.splice(this.newKeyword.index,1,newKey);
+            this.nowKeyword.splice(this.newKeyword.index,1,this.newKeyword.name);
             //隐藏输入框
             this.clearNewkeyword();
         }

@@ -216,11 +216,11 @@
             }
         },
         created(){
-            //只有第一次创建执行，查询排名前500的知识页作为自动提示
+            //只有第一次创建执行，查询排名前1000的知识页作为自动提示
             this.$axios({
                 url: `${this.userServicePath}/client/findTopRank`,
                 params: {
-                    size: 500,
+                    size: 1000,
                     token:this.service_token
                 },
                 method:'get'
