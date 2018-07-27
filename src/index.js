@@ -10,6 +10,7 @@ import 'mavon-editor/dist/css/index.css';
 import axios from 'axios';
 import qs from 'qs';
 import $ from 'jquery';
+import VCharts from 'v-charts'
 //为array添加工具方法
 Array.prototype.in_array = function(element) {　　
     for (var i = 0; i < this.length; i++) {　　
@@ -20,8 +21,9 @@ Array.prototype.in_array = function(element) {　　
     return false;
 }
 
-Vue.use(iView, { locale })
-Vue.use(mavonEditor)
+Vue.use(iView, { locale });
+Vue.use(mavonEditor);
+Vue.use(VCharts);
 Vue.config.debug = true; //开启错误提示
 Vue.prototype.$axios = axios;
 Vue.prototype.$qs = qs;

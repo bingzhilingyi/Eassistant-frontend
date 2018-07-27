@@ -12,11 +12,13 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "echarts": "^4.1.0",
         "koa": "^2.5.0",
         "koa-bodyparser": "^4.2.0",
         "koa-router": "^7.4.0",
         "koa-static": "^4.0.2",
-        "npm": "^6.1.0",
+        "npm": "^6.2.0",
+        "v-charts": "^1.17.8",
         "vue-schart": "^1.0.0"
     },
     "devDependencies": {

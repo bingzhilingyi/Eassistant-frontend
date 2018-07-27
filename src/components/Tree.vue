@@ -277,15 +277,15 @@
                 }
             },
             //自动补全方法
-            handleComplete(value){
-                this.AutoCompleteData = []
-                //遍历数据源，如果存在要搜索的字符串，就加入data里
-                for(let i=0;i<this.AutoCompleteDataSource.length;i++){
-                    if(value&&this.AutoCompleteDataSource[i].toUpperCase().indexOf(value.toUpperCase()) !== -1){
-                        this.AutoCompleteData.push(this.AutoCompleteDataSource[i]);
-                    }
-                }
-            },
+            // handleComplete(value){
+            //     this.AutoCompleteData = []
+            //     //遍历数据源，如果存在要搜索的字符串，就加入data里
+            //     for(let i=0;i<this.AutoCompleteDataSource.length;i++){
+            //         if(value&&this.AutoCompleteDataSource[i].toUpperCase().indexOf(value.toUpperCase()) !== -1){
+            //             this.AutoCompleteData.push(this.AutoCompleteDataSource[i]);
+            //         }
+            //     }
+            // },
             //清空查询数据并隐藏查询框
             hideSearch(){
                 this.searchedData = [];
