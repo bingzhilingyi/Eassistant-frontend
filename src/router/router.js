@@ -72,6 +72,11 @@ const routes = [{
             name: 'dataVisualization',
             component: resolve => require(['../components/DataVisualization.vue'], resolve),
             props: true
+        }, {
+            path: 'NoResultReport',
+            name: 'NoResultReport',
+            component: resolve => require(['../components/NoResultReport.vue'], resolve),
+            props: true
         }]
     }
 ];

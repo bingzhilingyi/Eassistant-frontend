@@ -34,6 +34,14 @@ const conf = {
                 child: [
                     { key: 'dataVisualization', label: '可视化' },
                 ]
+            },
+            {
+                key: 'report',
+                iconType: 'podium',
+                label: '报表',
+                child: [
+                    { key: 'NoResultReport', label: '无结果查询历史' },
+                ]
             }
         ]
     }
