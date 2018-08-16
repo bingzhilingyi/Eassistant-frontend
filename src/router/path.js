@@ -3,7 +3,6 @@ const service_token = 'zdRcLtPlnBTs55KWg9KJqbBHKadYlY';
 
 ///////////---dev---///////////
 const userServicePath_dev = "http://localhost:8080/qa";
-//const userServicePath_dev = "http://10.61.16.29:8522/qa";
 const localhost_dev = "http://localhost:8888";
 const servicePaths_dev = () => {
     return {
@@ -14,9 +13,21 @@ const servicePaths_dev = () => {
 };
 ///////////---dev-end---///////////
 
+///////////---sit---///////////
+const userServicePath_sit = "http://10.61.16.29:8522/qa";
+const localhost_sit = "http://10.61.16.29:8523";
+const servicePaths_sit = () => {
+    return {
+        service_token,
+        userServicePath: userServicePath_sit,
+        localhost_address: localhost_sit
+    }
+};
+///////////---sit-end---///////////
+
 ///////////---pro---///////////
-const userServicePath_pro = "http://10.61.16.29:8522/qa";
-const localhost_pro = "http://10.61.16.29:8523";
+const userServicePath_pro = "http://10.61.16.29:8532/qa";
+const localhost_pro = "http://10.61.16.29:8533";
 const servicePaths_pro = () => {
     return {
         service_token,
@@ -29,6 +40,8 @@ const servicePaths_pro = () => {
 var servicePaths;
 if (process.env.NODE_ENV === 'development') {
     servicePaths = servicePaths_dev
+} else if (process.env.NODE_ENV === 'sit') {
+    servicePaths = servicePaths_sit
 } else {
     servicePaths = servicePaths_pro
 }
