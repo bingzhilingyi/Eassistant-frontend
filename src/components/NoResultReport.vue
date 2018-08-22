@@ -46,12 +46,8 @@ export default {
             to:'',
             recordColumn : [
                     {
-                        title: 'ID',
-                        key: 'recordId'
-                    },
-                    {
                         title: '查询记录',
-                        key: 'recordTitle'
+                        key: 'historyContent'
                     },
                     {
                         title: '查询时间',

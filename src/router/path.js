@@ -38,12 +38,12 @@ const servicePaths_pro = () => {
 ///////////---pro-end---///////////
 
 var servicePaths;
-if (process.env.NODE_ENV === 'development') {
-    servicePaths = servicePaths_dev
-} else if (process.env.NODE_ENV === 'sit') {
+if (process.env.NODE_ENV == 'prod') {
+    servicePaths = servicePaths_pro
+} else if (process.env.NODE_ENV == 'sit') {
     servicePaths = servicePaths_sit
 } else {
-    servicePaths = servicePaths_pro
+    servicePaths = servicePaths_dev
 }
 
 
