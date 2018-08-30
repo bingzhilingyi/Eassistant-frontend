@@ -15,6 +15,7 @@
 
 <template>
     <div>
+        <Button type="primary" size="large" @click="exportData(1)"><Icon type="ios-download-outline"></Icon>导出CSV</Button>
         <div class="searchBar">
             <span class="searchItem">
                 <span>起始日期</span>
@@ -26,7 +27,7 @@
             </span>
             <Button icon="ios-search" @click="searchRecord" type="primary" size=large class="searchBtn">查询</Button>
         </div>
-        <Table :columns="recordColumn" :data="recordData" :loading="isLoading" stripe border></Table>
+        <Table :columns="recordColumn" :data="recordData" :loading="isLoading" stripe border ref="table"></Table>
         <div style="float: right;">
             <Page :total="totalElements" :current="currentPage" :page-size="pageSize" @on-change="changePage" show-total show-elevator size="small"></Page>
         </div>
@@ -143,6 +144,12 @@ export default {
             }
             let str = `${year}-${month}-${day}`;
             return str;
+        },
+        //导出数据
+        exportData (type) {
+            this.$refs.table.exportCsv({
+                filename: '无结果查询历史'
+            });
         }
 	}
 }
