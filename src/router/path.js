@@ -14,8 +14,8 @@ const servicePaths_dev = () => {
 ///////////---dev-end---///////////
 
 ///////////---sit---///////////
-const userServicePath_sit = "http://10.61.16.29:8522/qa";
-const localhost_sit = "http://10.61.16.29:8523";
+const userServicePath_sit = "";
+const localhost_sit = "";
 const servicePaths_sit = () => {
     return {
         service_token,
@@ -26,8 +26,8 @@ const servicePaths_sit = () => {
 ///////////---sit-end---///////////
 
 ///////////---pro---///////////
-const userServicePath_pro = "http://10.61.16.29:8532/qa";
-const localhost_pro = "http://10.61.16.29:8533";
+const userServicePath_pro = "";
+const localhost_pro = "";
 const servicePaths_pro = () => {
     return {
         service_token,
