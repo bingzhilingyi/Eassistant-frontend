@@ -23,7 +23,7 @@
         "vue-schart": "^1.0.0"
     },
     "devDependencies": {
-        "qs": "^6.5.2",
+        "qs": "^6.5.3",
         "axios": "^0.18.0",
         "jquery-ui": "^1.12.1",
         "autoprefixer": "^8.1.0",
